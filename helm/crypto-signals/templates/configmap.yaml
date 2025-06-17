@@ -9,12 +9,6 @@ metadata:
   annotations:
     description: "Global configuration for crypto trading signal detection services"
 data:
-  # Kafka configuration
-  kafka-bootstrap-servers: {{ .Values.config.kafkaBootstrapServers | quote }}
-  kafka-topic-prefix: {{ .Values.config.kafkaTopicPrefix | quote }}
-  kafka-topic-prices: "crypto-prices"
-  kafka-topic-signals: "trading-signals"
-  
   # Logging configuration
   log-level: {{ .Values.config.logLevel | quote }}
   log-format: {{ .Values.config.logFormat | quote }}

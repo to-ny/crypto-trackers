@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "crypto-signals.fullname" . }}-kafka
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "crypto-signals.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  serviceName: {{ include "crypto-signals.fullname" . }}-kafka-headless
+  replicas: {{ .Values.kafka.replicas }}
+  selector:
+    matchLabels:
+      {{- include "crypto-signals.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kafka
+  template:
+    metadata:
+      labels:
+        {{- include "crypto-signals.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: "{{ .Values.kafka.image.repository }}:{{ .Values.kafka.image.tag }}"
+        imagePullPolicy: {{ .Values.kafka.image.pullPolicy }}
+        ports:
+        - containerPort: 9092
+          name: kafka
+        - containerPort: 9093
+          name: kafka-internal
+        env:
+        - name: KAFKA_BROKER_ID
+          value: "$(echo ${HOSTNAME} | sed 's/.*-//')"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: "{{ include "crypto-signals.fullname" . }}-zookeeper:2181"
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:9093"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://$(POD_NAME).{{ include "crypto-signals.fullname" . }}-kafka-headless.{{ .Values.namespace }}.svc.cluster.local:9092,INTERNAL://$(POD_NAME).{{ include "crypto-signals.fullname" . }}-kafka-headless.{{ .Values.namespace }}.svc.cluster.local:9093"
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT"
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "INTERNAL"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "2"
+        - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_MIN_INSYNC_REPLICAS
+          value: "2"
+        - name: KAFKA_LOG_RETENTION_HOURS
+          value: "168"
+        - name: KAFKA_LOG_SEGMENT_BYTES
+          value: "1073741824"
+        - name: KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS
+          value: "300000"
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx{{ .Values.kafka.jvmHeap }} -Xms{{ .Values.kafka.jvmHeap }}"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        resources:
+          {{- toYaml .Values.kafka.resources | nindent 10 }}
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /var/lib/kafka/data
+        livenessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - kafka
+              topologyKey: kubernetes.io/hostname
+          - weight: 50
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - kafka
+              topologyKey: topology.kubernetes.io/zone
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.kafka.storage.storageClass }}
+      storageClassName: {{ .Values.kafka.storage.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.kafka.storage.size }}

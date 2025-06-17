@@ -26,39 +26,37 @@ This system consists of multiple microservices deployed via Helm charts on Kuber
    - kubectl configured
    - Helm v3+ installed
 
-2. **Deploy using Helm**
+2. **Deployment**
    ```bash
-   # Install the base infrastructure (namespace and configuration)
+   # Install the system
    helm install crypto-signals ./helm/crypto-signals
    
    # Verify deployment
    kubectl get all -n crypto-signals
    ```
 
-3. **Deploy additional components (when implemented)**
-   ```bash
-   # All components including Kafka and services will be deployed via Helm
-   # Additional Helm values can be customized as needed
-   helm upgrade crypto-signals ./helm/crypto-signals --set kafka.enabled=true
-   ```
-
 ## Project Structure
 
 ```
 crypto-trading-signals/
-├── services/                   # Microservices source code (planned)
+├── services/                   # Microservices source code (to be implemented)
 │   ├── data-ingestion/        # Python service for data collection
 │   ├── ma-signal-detector/    # Go service for MA signal detection
 │   ├── volume-spike-detector/ # Go service for volume spike detection
 │   └── alert-service/         # Go service for alert management
 ├── helm/                      # Helm charts for deployment
-│   └── crypto-signals/       # Main chart for the system
-├── k8s/                       # Legacy Kubernetes manifests (reference)
-│   ├── namespace/            # Namespace and global config
-│   ├── kafka/               # Kafka deployment (planned)
-│   ├── services/            # Service deployments (planned)
-│   └── monitoring/          # Monitoring stack (planned)
-└── docs/                    # Additional documentation
+│   └── crypto-signals/       # Main chart with Kafka cluster
+│       ├── templates/        # Kubernetes resource templates
+│       │   ├── kafka-*.yaml # Kafka StatefulSet and Services
+│       │   ├── zookeeper-*.yaml # Zookeeper StatefulSet and Services
+│       │   ├── namespace.yaml # Namespace creation
+│       │   └── configmap.yaml # Global configuration
+│       ├── values.yaml      # Configuration values
+│       ├── test-deployment.sh # Deployment testing script
+│       └── README.md        # Chart documentation
+├── DESIGN.md                  # System architecture and design
+├── ROADMAP.md                # Implementation roadmap
+└── PROJECT_STRUCTURE.md      # Project organization details
 ```
 
 ## Development

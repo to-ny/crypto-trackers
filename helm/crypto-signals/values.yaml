@@ -1,9 +1,46 @@
 # Global configuration for crypto-signals
 namespace: crypto-signals
 
+# Kafka configuration
+kafka:
+  replicas: 3
+  image:
+    repository: confluentinc/cp-kafka
+    tag: "7.4.0"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  storage:
+    size: "10Gi"
+    storageClass: ""
+  jvmHeap: "1G"
+
+# Zookeeper configuration
+zookeeper:
+  replicas: 3
+  image:
+    repository: confluentinc/cp-zookeeper
+    tag: "7.4.0"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  storage:
+    size: "5Gi"
+    storageClass: ""
+
 # Global configuration values
 config:
-  kafkaBootstrapServers: "kafka:9092"
+  kafkaBootstrapServers: "crypto-signals-kafka:9092"
   kafkaTopicPrefix: "crypto-signals"
   logLevel: "info"
   logFormat: "json"
