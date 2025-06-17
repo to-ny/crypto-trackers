@@ -7,8 +7,8 @@ This roadmap organizes features by implementation priority and logical dependenc
 ## 1. Kubernetes Infrastructure
 
 ### 1.1 Basic Cluster Setup
-- [ ] Namespace creation (`crypto-signals`)
-- [ ] ConfigMaps for application configuration
+- [x] Namespace creation (`crypto-signals`)
+- [x] ConfigMaps for application configuration
 - [ ] Secrets for API keys (even if unused initially)
 
 ### 1.2 Kafka Deployment

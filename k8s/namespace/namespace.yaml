@@ -1,0 +1,13 @@
+# Namespace for the crypto trading signal detection system
+# This creates an isolated environment for all system components
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crypto-signals
+  labels:
+    name: crypto-signals
+    app.kubernetes.io/name: crypto-trading-signals
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: infrastructure
+  annotations:
+    description: "Namespace for crypto trading signal detection microservices"
