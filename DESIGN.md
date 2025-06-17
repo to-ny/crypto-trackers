@@ -105,8 +105,9 @@ External APIs → Data Ingestion → Kafka Topics → Signal Detection → Alert
 - Provides durability, fault tolerance, and high throughput
 - Chosen for its proven scalability in financial data processing
 
-**Kubernetes**
+**Kubernetes with Helm**
 - Container orchestration platform for deployment and scaling
+- Helm v3+ for templated deployments and configuration management
 - Provides service discovery, load balancing, and resource management
 - Industry standard for cloud-native applications
 
@@ -129,8 +130,9 @@ External APIs → Data Ingestion → Kafka Topics → Signal Detection → Alert
 - Base images: `python:3.11-slim`, `golang:1.21-alpine`
 
 **Helm Charts**
-- Kubernetes deployment templating and management
+- Primary deployment method using Kubernetes templating
 - Simplified configuration management across environments
+- Version-controlled deployments with rollback capabilities
 
 ### 3.4 External Dependencies
 
@@ -288,17 +290,18 @@ For `volume_spike` signal type, the details object contains:
 
 ## 6. Deployment Strategy
 
-### 6.1 Kubernetes Architecture
+### 6.1 Helm-Based Kubernetes Architecture
 
-The system deploys as a collection of Kubernetes resources organized in a dedicated namespace (`crypto-signals`).
+The system deploys via Helm charts as a collection of Kubernetes resources organized in a dedicated namespace (`crypto-signals`). All deployments are managed through the `helm/crypto-signals/` chart.
 
-**Resource Types:**
+**Resource Types (via Helm Templates):**
 - **StatefulSet**: Kafka cluster with persistent storage
 - **Deployments**: All application services (stateless)
 - **Services**: Internal service discovery and load balancing
 - **ConfigMaps**: Environment-specific configuration
 - **Secrets**: API keys and sensitive configuration
 - **PersistentVolumes**: Kafka data storage
+- **Jobs**: Topic creation and initialization tasks
 
 ### 6.2 Kafka Deployment
 
@@ -343,11 +346,16 @@ The system deploys as a collection of Kubernetes resources organized in a dedica
 
 ### 6.5 Configuration Management
 
-**ConfigMaps:**
+**Helm Values (`values.yaml`):**
+- Centralized configuration for all services and infrastructure
+- Environment-specific overrides for dev/staging/production
+- Feature flags for enabling/disabling components
+
+**ConfigMaps (Generated from Helm Templates):**
 - `crypto-config`: Supported symbols, polling intervals, thresholds
 - `kafka-config`: Broker addresses, topic names, consumer group IDs
 
-**Secrets:**
+**Secrets (Generated from Helm Templates):**
 - `api-secrets`: CoinGecko API key (if premium tier used)
 - Base64 encoded and mounted as environment variables
 

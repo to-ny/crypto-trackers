@@ -20,11 +20,14 @@ crypto-trading-signals/
 │   ├── volume-spike-detector/   # Go volume spike service
 │   └── alert-service/           # Go alert service
 │
-└── k8s/                         # Kubernetes manifests
-    ├── namespace/               # Namespace and RBAC
-    ├── kafka/                   # Kafka cluster deployment
-    ├── services/                # Service deployments
-    └── monitoring/              # Health checks and monitoring
+└── helm/                        # Helm charts for deployment
+    └── crypto-signals/         # Main Helm chart
+        ├── Chart.yaml          # Chart metadata
+        ├── values.yaml         # Default configuration values
+        └── templates/          # Kubernetes resource templates
+            ├── _helpers.tpl    # Template helpers
+            ├── namespace.yaml  # Namespace template
+            └── configmap.yaml  # ConfigMap template
 ```
 
 ## Service Directory Structure
@@ -106,42 +109,66 @@ services/ma-signal-detector/
     └── unit/                   # Unit tests
 ```
 
-## Kubernetes Structure
+## Deployment Structure
+
+### Helm Charts
+
+All deployments are managed through Helm charts in the `helm/crypto-signals/` directory:
 
 ```
-k8s/
-├── namespace/
-│   ├── namespace.yaml          # Crypto-signals namespace
-│   ├── configmap.yaml          # Global configuration
-│   └── secrets.yaml            # API keys and secrets
+helm/crypto-signals/
+├── Chart.yaml                  # Chart metadata and dependencies
+├── values.yaml                 # Default configuration values
+├── README.md                   # Chart documentation and usage
 │
-├── kafka/
-│   ├── zookeeper.yaml          # Zookeeper StatefulSet
-│   ├── kafka.yaml              # Kafka StatefulSet
-│   ├── kafka-service.yaml      # Kafka service discovery
-│   └── topics.yaml             # Topic creation job
+├── templates/
+│   ├── _helpers.tpl           # Template helper functions
+│   ├── namespace.yaml         # Crypto-signals namespace
+│   ├── configmap.yaml         # Global configuration
+│   │
+│   ├── kafka/                 # Kafka cluster resources (planned)
+│   │   ├── zookeeper.yaml     # Zookeeper StatefulSet
+│   │   ├── kafka.yaml         # Kafka StatefulSet
+│   │   ├── kafka-service.yaml # Kafka service discovery
+│   │   └── topics.yaml        # Topic creation job
+│   │
+│   ├── services/              # Microservice deployments (planned)
+│   │   ├── data-ingestion/
+│   │   │   ├── deployment.yaml    # Service deployment
+│   │   │   ├── service.yaml       # Kubernetes service
+│   │   │   ├── configmap.yaml     # Service-specific config
+│   │   │   └── hpa.yaml          # Horizontal Pod Autoscaler
+│   │   │
+│   │   ├── ma-signal-detector/
+│   │   │   ├── deployment.yaml
+│   │   │   ├── service.yaml
+│   │   │   ├── configmap.yaml
+│   │   │   └── hpa.yaml
+│   │   │
+│   │   ├── volume-spike-detector/
+│   │   │   ├── deployment.yaml
+│   │   │   ├── service.yaml
+│   │   │   ├── configmap.yaml
+│   │   │   └── hpa.yaml
+│   │   │
+│   │   └── alert-service/
+│   │       ├── deployment.yaml
+│   │       ├── service.yaml
+│   │       ├── configmap.yaml
+│   │       └── hpa.yaml
+│   │
+│   ├── monitoring/            # Monitoring resources (planned)
+│   │   ├── health-checks.yaml     # Health monitoring
+│   │   ├── service-monitor.yaml   # Prometheus metrics collection
+│   │   └── dashboards.yaml        # Grafana dashboards
+│   │
+│   └── secrets/               # Secret management (planned)
+│       ├── api-keys.yaml      # External API credentials
+│       └── kafka-auth.yaml    # Kafka authentication
 │
-├── services/
-│   ├── data-ingestion/
-│   │   ├── deployment.yaml     # Service deployment
-│   │   ├── service.yaml        # K8s service
-│   │   └── configmap.yaml      # Service-specific config
-│   │
-│   ├── ma-signal-detector/
-│   │   ├── deployment.yaml
-│   │   ├── service.yaml
-│   │   ├── configmap.yaml
-│   │   └── hpa.yaml           # Horizontal Pod Autoscaler
-│   │
-│   ├── volume-spike-detector/
-│   │   └── [same structure]
-│   │
-│   └── alert-service/
-│       └── [same structure]
-│
-└── monitoring/
-    ├── health-checks.yaml      # Health monitoring
-    └── service-monitor.yaml    # Metrics collection
+└── charts/                    # Subcharts (planned)
+    ├── kafka/                 # Kafka subchart
+    └── monitoring/            # Monitoring subchart
 ```
 
 ## File Naming Conventions
@@ -176,10 +203,9 @@ k8s/
 6. Update service README with specific instructions
 
 ### Infrastructure Changes
-1. Update manifests in `k8s/` directory
-2. Test changes in local environment
-3. Document any new configuration requirements
-4. Update deployment scripts if needed
+1. Update Helm chart templates in `helm/crypto-signals/templates/`
+2. Update values in `helm/crypto-signals/values.yaml`
+3. Test changes in local environment using `helm install/upgrade`
 
 ### Documentation Updates
 1. Service-specific docs in service README

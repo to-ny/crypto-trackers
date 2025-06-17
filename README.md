@@ -4,7 +4,7 @@ A distributed microservices-based system for detecting cryptocurrency trading si
 
 ## Architecture Overview
 
-This system consists of multiple microservices running on Kubernetes:
+This system consists of multiple microservices deployed via Helm charts on Kubernetes:
 
 - **Data Ingestion Service** (Python): Collects real-time cryptocurrency market data from various exchanges
 - **Moving Average Signal Detector** (Go): Detects trading signals based on moving average crossovers
@@ -14,6 +14,7 @@ This system consists of multiple microservices running on Kubernetes:
 ## Technology Stack
 
 - **Container Orchestration**: Kubernetes
+- **Deployment**: Helm v3+ charts
 - **Message Streaming**: Apache Kafka
 - **Languages**: Python (data ingestion), Go (signal processing and alerts)
 - **Monitoring**: Prometheus & Grafana (planned)
@@ -23,37 +24,40 @@ This system consists of multiple microservices running on Kubernetes:
 1. **Prerequisites**
    - Kubernetes cluster (minikube, kind, or cloud provider)
    - kubectl configured
-   - Helm (for Kafka installation)
+   - Helm v3+ installed
 
-2. **Deploy the namespace and base configuration**
+2. **Deploy using Helm**
    ```bash
-   kubectl apply -f k8s/namespace/
+   # Install the base infrastructure (namespace and configuration)
+   helm install crypto-signals ./helm/crypto-signals
+   
+   # Verify deployment
+   kubectl get all -n crypto-signals
    ```
 
-3. **Deploy Kafka**
+3. **Deploy additional components (when implemented)**
    ```bash
-   kubectl apply -f k8s/kafka/
-   ```
-
-4. **Deploy services**
-   ```bash
-   kubectl apply -f k8s/services/
+   # All components including Kafka and services will be deployed via Helm
+   # Additional Helm values can be customized as needed
+   helm upgrade crypto-signals ./helm/crypto-signals --set kafka.enabled=true
    ```
 
 ## Project Structure
 
 ```
 crypto-trading-signals/
-├── services/                   # Microservices source code
+├── services/                   # Microservices source code (planned)
 │   ├── data-ingestion/        # Python service for data collection
 │   ├── ma-signal-detector/    # Go service for MA signal detection
 │   ├── volume-spike-detector/ # Go service for volume spike detection
 │   └── alert-service/         # Go service for alert management
-├── k8s/                       # Kubernetes manifests
+├── helm/                      # Helm charts for deployment
+│   └── crypto-signals/       # Main chart for the system
+├── k8s/                       # Legacy Kubernetes manifests (reference)
 │   ├── namespace/            # Namespace and global config
-│   ├── kafka/               # Kafka deployment
-│   ├── services/            # Service deployments
-│   └── monitoring/          # Monitoring stack
+│   ├── kafka/               # Kafka deployment (planned)
+│   ├── services/            # Service deployments (planned)
+│   └── monitoring/          # Monitoring stack (planned)
 └── docs/                    # Additional documentation
 ```
 
@@ -66,15 +70,3 @@ Each service directory contains its own README with specific development instruc
 - [System Design](DESIGN.md) - Detailed system architecture and design decisions
 - [Project Structure](PROJECT_STRUCTURE.md) - Detailed project organization
 - [Roadmap](ROADMAP.md) - Development roadmap and milestones
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-[License information to be added]

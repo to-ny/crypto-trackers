@@ -4,23 +4,24 @@
 
 This roadmap organizes features by implementation priority and logical dependencies. Each section can be tackled independently with coding agents, building incrementally toward a complete system.
 
-## 1. Kubernetes Infrastructure
+## 1. Deployment Infrastructure (Helm Charts)
 
-### 1.1 Basic Cluster Setup
-- [x] Namespace creation (`crypto-signals`)
-- [x] ConfigMaps for application configuration
-- [ ] Secrets for API keys (even if unused initially)
+### 1.1 Helm Chart Foundation
+- [x] Namespace creation (`crypto-signals`) via Helm template
+- [x] ConfigMaps for application configuration via Helm template
+- [ ] Secrets for API keys via Helm template (even if unused initially)
+- [ ] Helm values.yaml with configurable parameters
 
-### 1.2 Kafka Deployment
-- [ ] Kafka StatefulSet with 3 brokers
-- [ ] Persistent volumes for Kafka data
-- [ ] Zookeeper coordination service
-- [ ] Anti-affinity rules for broker distribution
+### 1.2 Kafka Deployment (Helm Templates)
+- [ ] Kafka StatefulSet with 3 brokers via Helm template
+- [ ] Persistent volumes for Kafka data via Helm template
+- [ ] Zookeeper coordination service via Helm template
+- [ ] Anti-affinity rules for broker distribution via Helm template
 
-### 1.3 Topic Configuration
-- [ ] Create `crypto-prices` topic (2 partitions, replication factor 3)
-- [ ] Create `trading-signals` topic (2 partitions, replication factor 3)
-- [ ] Verify topic creation and partition assignment
+### 1.3 Topic Configuration (Helm Job Templates)
+- [ ] Create `crypto-prices` topic (2 partitions, replication factor 3) via Helm job
+- [ ] Create `trading-signals` topic (2 partitions, replication factor 3) via Helm job
+- [ ] Verify topic creation and partition assignment in Helm tests
 
 ## 2. Data Ingestion Service
 
@@ -49,9 +50,9 @@ This roadmap organizes features by implementation priority and logical dependenc
 
 ### 2.5 Containerization and Deployment
 - [ ] Dockerfile with Python runtime
-- [ ] Kubernetes Deployment manifest
-- [ ] Service configuration for health checks
-- [ ] Environment variable configuration
+- [ ] Helm deployment template
+- [ ] Helm service template for health checks
+- [ ] Environment variable configuration via Helm values
 
 ## 3. Moving Average Signal Detection Service
 
@@ -89,7 +90,7 @@ This roadmap organizes features by implementation priority and logical dependenc
 - [ ] Health and readiness endpoints
 - [ ] Structured logging with correlation IDs
 - [ ] Graceful shutdown and resource cleanup
-- [ ] Dockerfile and Kubernetes deployment
+- [ ] Dockerfile and Helm deployment template
 
 ## 4. Volume Spike Detection Service
 
@@ -115,7 +116,7 @@ This roadmap organizes features by implementation priority and logical dependenc
 - [ ] Kafka consumer for price events
 - [ ] Health monitoring endpoints
 - [ ] Error handling and recovery
-- [ ] Deployment configuration
+- [ ] Helm deployment template
 
 ## 5. Alert Service
 
@@ -140,8 +141,8 @@ This roadmap organizes features by implementation priority and logical dependenc
 ### 5.4 Service Infrastructure
 - [ ] Health and readiness checks
 - [ ] Graceful shutdown handling
-- [ ] Kubernetes deployment
-- [ ] Resource configuration
+- [ ] Helm deployment template
+- [ ] Resource configuration via Helm values
 
 ## 6. System Integration and Testing
 
@@ -170,7 +171,7 @@ This roadmap organizes features by implementation priority and logical dependenc
 2. **Add Kafka Integration:** Connect to message streams
 3. **Health Checks:** Add monitoring endpoints
 4. **Containerize:** Create Docker images
-5. **Deploy:** Add Kubernetes manifests
+5. **Deploy:** Add Helm chart templates
 
 ### Coding Agent Sessions
 - **Single Feature Focus:** Tackle one checkbox item per session
@@ -179,7 +180,8 @@ This roadmap organizes features by implementation priority and logical dependenc
 - **Clean Commits:** Each completed feature should be a separate commit
 
 ### Dependencies
-- Kafka infrastructure must be ready before any service development
+- Helm chart foundation must be ready before service deployment
+- Kafka infrastructure (via Helm) must be ready before any service development
 - Data Ingestion Service must be working before signal detection
 - Signal detection services must work before Alert Service
 - Within each service, core logic before Kafka integration

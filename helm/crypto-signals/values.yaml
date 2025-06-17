@@ -1,0 +1,12 @@
+# Global configuration for crypto-signals
+namespace: crypto-signals
+
+# Global configuration values
+config:
+  kafkaBootstrapServers: "kafka:9092"
+  kafkaTopicPrefix: "crypto-signals"
+  logLevel: "info"
+  logFormat: "json"
+  serviceDiscoveryNamespace: "crypto-signals"
+  apiTimeout: "30"
+  apiRetryAttempts: "3"
