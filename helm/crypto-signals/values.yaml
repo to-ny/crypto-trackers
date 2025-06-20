@@ -1,0 +1,28 @@
+global:
+  namespace: crypto-signals
+
+kafka:
+  replicas: 1
+  image: confluentinc/cp-kafka:7.4.0
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+  storage:
+    size: 1Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+config:
+  kafka:
+    bootstrapServers: "kafka-service:9092"
+    topics:
+      cryptoPrices: "crypto-prices"
+      tradingSignals: "trading-signals"
+  api:
+    pollingInterval: 60
+    coingecko:
+      baseUrl: "https://api.coingecko.com/api/v3"

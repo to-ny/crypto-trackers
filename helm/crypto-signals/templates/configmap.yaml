@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crypto-signals-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "crypto-signals.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafka.bootstrapServers | quote }}
+  KAFKA_TOPIC_CRYPTO_PRICES: {{ .Values.config.kafka.topics.cryptoPrices | quote }}
+  KAFKA_TOPIC_TRADING_SIGNALS: {{ .Values.config.kafka.topics.tradingSignals | quote }}
+  API_POLLING_INTERVAL: {{ .Values.config.api.pollingInterval | quote }}
+  COINGECKO_BASE_URL: {{ .Values.config.api.coingecko.baseUrl | quote }}

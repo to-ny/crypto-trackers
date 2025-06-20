@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "crypto-signals.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  clusterIP: None
+  ports:
+  - port: 9092
+    name: kafka
+  selector:
+    {{- include "crypto-signals.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "crypto-signals.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+spec:
+  ports:
+  - port: 9092
+    name: kafka
+  selector:
+    {{- include "crypto-signals.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
