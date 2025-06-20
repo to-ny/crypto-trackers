@@ -4,7 +4,7 @@ metadata:
   name: kafka-topic-init
   namespace: {{ .Values.global.namespace }}
   labels:
-    {{- include "crypto-signals.labels" . | nindent 4 }}
+    {{- include "crypto-trackers.labels" . | nindent 4 }}
     app.kubernetes.io/component: kafka-init
   annotations:
     "helm.sh/hook": post-install,post-upgrade
@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "crypto-signals.selectorLabels" . | nindent 8 }}
+        {{- include "crypto-trackers.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: kafka-init
     spec:
       restartPolicy: OnFailure

@@ -4,7 +4,7 @@ metadata:
   name: zookeeper-headless
   namespace: {{ .Values.global.namespace }}
   labels:
-    {{- include "crypto-signals.labels" . | nindent 4 }}
+    {{- include "crypto-trackers.labels" . | nindent 4 }}
     app.kubernetes.io/component: zookeeper
 spec:
   clusterIP: None
@@ -16,7 +16,7 @@ spec:
   - port: 3888
     name: leader-election
   selector:
-    {{- include "crypto-signals.selectorLabels" . | nindent 4 }}
+    {{- include "crypto-trackers.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: zookeeper
 ---
 apiVersion: v1
@@ -25,12 +25,12 @@ metadata:
   name: zookeeper-service
   namespace: {{ .Values.global.namespace }}
   labels:
-    {{- include "crypto-signals.labels" . | nindent 4 }}
+    {{- include "crypto-trackers.labels" . | nindent 4 }}
     app.kubernetes.io/component: zookeeper
 spec:
   ports:
   - port: 2181
     name: client
   selector:
-    {{- include "crypto-signals.selectorLabels" . | nindent 4 }}
+    {{- include "crypto-trackers.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: zookeeper

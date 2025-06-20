@@ -1,5 +1,5 @@
 global:
-  namespace: crypto-signals
+  namespace: crypto-trackers
 
 kafka:
   replicas: 1

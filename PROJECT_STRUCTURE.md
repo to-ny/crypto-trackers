@@ -2,12 +2,12 @@
 
 ## Overview
 
-High-level organization for the Crypto Trading Signal Detector microservices system.
+High-level organization for the system.
 
 ## Root Structure
 
 ```
-crypto-trading-signals/
+crypto-trackers/
 ├── README.md
 ├── DESIGN.md
 ├── ROADMAP.md

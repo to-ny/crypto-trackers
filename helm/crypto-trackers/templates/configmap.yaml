@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: crypto-signals-config
+  name: crypto-trackers-config
   namespace: {{ .Values.global.namespace }}
   labels:
-    app.kubernetes.io/name: {{ include "crypto-signals.name" . }}
+    app.kubernetes.io/name: {{ include "crypto-trackers.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 data:

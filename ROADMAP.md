@@ -16,21 +16,21 @@ This roadmap is designed for AI coding agents. Each task is self-contained and i
 **Objective:** Create the basic Helm chart structure and namespace setup.
 
 **Requirements:**
-- Create `helm/crypto-signals/Chart.yaml` with chart metadata
-- Create `helm/crypto-signals/values.yaml` with default configuration
-- Create `helm/crypto-signals/templates/namespace.yaml` for `crypto-signals` namespace
-- Create `helm/crypto-signals/templates/configmap.yaml` for shared configuration
+- Create `helm/crypto-trackers/Chart.yaml` with chart metadata
+- Create `helm/crypto-trackers/values.yaml` with default configuration
+- Create `helm/crypto-trackers/templates/namespace.yaml` for `crypto-trackers` namespace
+- Create `helm/crypto-trackers/templates/configmap.yaml` for shared configuration
 
 **Acceptance Criteria:**
-- Helm chart can be installed with `helm install crypto-signals ./helm/crypto-signals`
-- Namespace `crypto-signals` is created
+- Helm chart can be installed with `helm install crypto-trackers ./helm/crypto-trackers`
+- Namespace `crypto-trackers` is created
 - ConfigMap contains placeholder values for Kafka configuration
 
 ### Task 1.2: Kafka Infrastructure
 **Objective:** Deploy Kafka cluster via Helm templates.
 
 **Requirements:**
-- Create StatefulSet for Kafka brokers in `helm/crypto-signals/templates/kafka/`
+- Create StatefulSet for Kafka brokers in `helm/crypto-trackers/templates/kafka/`
 - Create Service for Kafka broker discovery
 - Create Job to initialize topics: `crypto-prices` and `trading-signals`
 - Configure appropriate resource requests and storage
@@ -91,7 +91,7 @@ This roadmap is designed for AI coding agents. Each task is self-contained and i
 **Objective:** Create Helm deployment for data ingestion service.
 
 **Requirements:**
-- Create Helm deployment template in `helm/crypto-signals/templates/services/data-ingestion/`
+- Create Helm deployment template in `helm/crypto-trackers/templates/services/data-ingestion/`
 - Include Deployment, Service, and ConfigMap resources
 - Configure environment variables for API polling interval and Kafka settings
 - Add proper health checks and resource requests
