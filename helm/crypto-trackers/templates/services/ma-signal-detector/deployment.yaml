@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "crypto-trackers.fullname" . }}-ma-signal-detector
+  labels:
+    {{- include "crypto-trackers.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ma-signal-detector
+spec:
+  replicas: {{ .Values.maSignalDetector.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "crypto-trackers.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ma-signal-detector
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "crypto-trackers.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ma-signal-detector
+    spec:
+      containers:
+      - name: ma-signal-detector
+        image: "{{ .Values.maSignalDetector.image.repository }}:{{ .Values.maSignalDetector.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.maSignalDetector.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: kafka-service:9092
+        - name: KAFKA_GROUP_ID
+          value: "{{ .Values.maSignalDetector.kafkaGroupId }}"
+        - name: PORT
+          value: "8080"
+        - name: LOG_LEVEL
+          value: "{{ .Values.maSignalDetector.logLevel }}"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          {{- toYaml .Values.maSignalDetector.resources | nindent 12 }}

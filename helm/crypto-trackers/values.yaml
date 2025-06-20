@@ -34,6 +34,25 @@ dataIngestion:
       memory: "256Mi"
       cpu: "200m"
 
+maSignalDetector:
+  replicaCount: 1
+  image:
+    repository: crypto-trackers/ma-signal-detector
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  kafkaGroupId: "ma-signal-detector"
+  logLevel: "INFO"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
 config:
   kafka:
     bootstrapServers: "kafka-service:9092"
