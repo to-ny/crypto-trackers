@@ -29,7 +29,7 @@ spec:
           protocol: TCP
         env:
         - name: KAFKA_BOOTSTRAP_SERVERS
-          value: {{ include "crypto-trackers.fullname" . }}-kafka:9092
+          value: kafka-service:9092
         - name: POLLING_INTERVAL
           value: "{{ .Values.dataIngestion.pollingInterval }}"
         - name: PORT

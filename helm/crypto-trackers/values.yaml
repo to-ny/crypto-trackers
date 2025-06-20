@@ -20,7 +20,7 @@ dataIngestion:
   replicaCount: 1
   image:
     repository: crypto-trackers/data-ingestion
-    tag: ""
+    tag: "latest"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP

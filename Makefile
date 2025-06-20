@@ -7,7 +7,7 @@ help:
 	@echo "  cleanup  - Remove deployment and cleanup resources"
 
 deploy:
-	helm install crypto-trackers ./helm/crypto-trackers --create-namespace --namespace crypto-trackers
+	helm upgrade --install crypto-trackers ./helm/crypto-trackers --create-namespace --namespace crypto-trackers
 
 verify:
 	./scripts/verify.sh
