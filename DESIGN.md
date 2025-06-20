@@ -1,156 +1,48 @@
 # Crypto Trading Signal Detector - Software Design Document
 
-## 1. Introduction and Overview
+## 1. Project Overview
 
-### 1.1 Project Description
+The Crypto Trading Signal Detector is a real-time distributed system that monitors cryptocurrency market data and generates trading signals based on technical analysis indicators.
 
-The Crypto Trading Signal Detector is a real-time distributed system that monitors cryptocurrency market data and generates trading signals based on technical analysis indicators. The system continuously ingests price and volume data from external APIs, processes this data through configurable signal detection algorithms, and delivers actionable alerts to users.
+### Objectives
+- Practice distributed systems architecture and event-driven design
+- Build a scalable system for cryptocurrency signal detection
+- Implement multi-language microservices with Kafka integration
 
-### 1.2 Project Objectives and Key Requirements
-
-**Primary Objectives:**
-Practice essential software engineering concepts including distributed systems architecture, event-driven design patterns, and multi-language development using real-world cryptocurrency market data.
-
-**Key Requirements:**
-- **Real-time Processing**: System must process market data with minimal latency (< 5 seconds from data ingestion to signal generation)
-- **Scalability**: Architecture must support easy addition of new cryptocurrencies and signal types
-- **Reliability**: System should handle API failures gracefully and maintain data consistency
-- **Observability**: Comprehensive logging, metrics, and health monitoring
-- **Cloud-Native**: Full Kubernetes deployment with proper resource management
-
-**Success Criteria:**
-- Successfully detect and alert on moving average crossovers and volume spikes for BTC and ETH
-- System runs continuously without manual intervention
-- Adding a new cryptocurrency requires only configuration changes
-- Complete Kubernetes deployment that can be reproduced in any cluster
-
-### 1.3 Document Purpose and Audience
-
-This document serves as the comprehensive design specification for the Crypto Trading Signal Detector system. It is intended for:
-- **Personal Reference** to maintain clear architectural foundations and design decisions
-- **AI Code Assistants** to ensure alignment and consistency during development sessions
-
-### 1.4 Document Contents
-
-This document covers:
-- **System Architecture**: High-level component design and data flow
-- **Technology Stack**: Framework and tool selections with rationale
-- **Data Models**: Message schemas and contracts
-- **Service Specifications**: Detailed component responsibilities
-- **Deployment Strategy**: Kubernetes configuration and scaling approach
-- **Monitoring and Observability**: Logging, metrics, and alerting strategy
-
-### 1.5 Background Information
-
-**Market Context:**
-Cryptocurrency markets operate 24/7 with high volatility, making them ideal for real-time signal detection systems. Traditional technical analysis indicators like moving averages and volume analysis remain relevant in crypto trading.
-
-**Technical Context:**
-This system leverages Apache Kafka for event streaming, providing the foundation for a scalable, fault-tolerant architecture. The microservices approach allows for independent scaling and deployment of different system components.
+### Success Criteria
+- Detect and alert on moving average crossovers and volume spikes for BTC and ETH
+- Add new cryptocurrencies through configuration only
+- Full Kubernetes deployment with Helm charts
 
 ## 2. System Architecture
 
-### 2.1 High-Level Architecture
-
-The system follows an event-driven microservices architecture with the following data flow:
-
+### High-Level Design
 ```
-External APIs → Data Ingestion → Kafka Topics → Signal Detection → Alert Generation
+CoinGecko API → Data Ingestion → Kafka → Signal Detection → Alerts
 ```
 
-### 2.2 Core Components
+### Core Components
 
-**Data Ingestion Service**
-- Polls CoinGecko API for BTC and ETH price/volume data
-- Transforms raw API responses into standardized events
-- Publishes price events to Kafka topics
-- Language: Python (leveraging rich data processing libraries)
+**Data Ingestion Service (Python)**
+- Polls CoinGecko API every 60 seconds for BTC/ETH data
+- Publishes standardized price events to Kafka
 
-**Kafka Event Streaming Platform**
-- Central message broker for all system communication
-- Topics: `crypto-prices`, `trading-signals`
-- Provides durability, scalability, and decoupling between services
+**Signal Detection Services (Go)**
+- Moving Average Service: Detects SMA 20/50 crossovers
+- Volume Spike Service: Identifies volume above 7-day average threshold
 
-**Signal Detection Services**
-- Moving Average Service: Detects crossover patterns (SMA 20/50)
-- Volume Spike Service: Identifies unusual trading volume
-- Each service consumes price events and publishes signal events
-- Language: Go (for high-performance concurrent processing)
+**Alert Service (Go)**
+- Consumes trading signals and generates notifications
+- Rate-limited output (1 alert per symbol per 5 minutes)
 
-**Alert Service**
-- Consumes trading signals from Kafka
-- Generates notifications (console output, structured logs)
-- Language: Go (consistent with signal detection services)
+**Kafka**
+- Event streaming backbone with two topics:
+  - `crypto-prices`: Raw market data
+  - `trading-signals`: Generated trading signals
 
-### 2.3 Data Flow
+## 3. Data Models
 
-1. **Ingestion Phase**: Data Ingestion Service fetches market data every 60 seconds
-2. **Event Publishing**: Raw price data published to `crypto-prices` topic
-3. **Signal Processing**: Detection services consume price events, apply algorithms
-4. **Signal Publishing**: Detected signals published to `trading-signals` topic
-5. **Alert Generation**: Alert Service consumes signals and generates notifications
-
-### 2.4 Scalability Design
-
-- **Horizontal Scaling**: Each service can be independently scaled based on load
-- **Topic Partitioning**: Kafka topics partitioned by cryptocurrency symbol
-- **Stateless Services**: All services designed to be stateless for easy scaling
-
-## 3. Technology Stack
-
-### 3.1 Core Technologies
-
-**Apache Kafka**
-- Event streaming platform for service communication
-- Provides durability, fault tolerance, and high throughput
-- Chosen for its proven scalability in financial data processing
-
-**Kubernetes with Helm**
-- Container orchestration platform for deployment and scaling
-- Helm v3+ for templated deployments and configuration management
-- Provides service discovery, load balancing, and resource management
-- Industry standard for cloud-native applications
-
-### 3.2 Programming Languages
-
-**Python (Data Ingestion Service)**
-- Rich ecosystem for API integration and data processing
-- Libraries: `requests` for HTTP calls, `kafka-python` for Kafka integration
-- Rapid development for data transformation tasks
-
-**Go (Signal Detection & Alert Services)**
-- High-performance concurrent processing capabilities
-- Native Kafka client with excellent performance characteristics
-- Compiled binaries reduce container overhead
-
-### 3.3 Infrastructure Components
-
-**Docker**
-- Containerization for consistent deployment across environments
-- Base images: `python:3.11-slim`, `golang:1.21-alpine`
-
-**Helm Charts**
-- Primary deployment method using Kubernetes templating
-- Simplified configuration management across environments
-- Version-controlled deployments with rollback capabilities
-
-### 3.4 External Dependencies
-
-**CoinGecko API**
-- Free tier provides sufficient rate limits (10-50 calls/minute)
-- Reliable cryptocurrency market data source
-- RESTful interface with consistent data format
-
-## 4. Data Models
-
-### 4.1 Kafka Message Schemas
-
-All Kafka messages follow a consistent JSON structure with metadata headers for traceability and routing.
-
-### 4.2 Price Event Schema
-
-Published to `crypto-prices` topic by the Data Ingestion Service.
-
+### Price Event (crypto-prices topic)
 ```json
 {
   "timestamp": "2024-06-16T14:30:00Z",
@@ -163,19 +55,7 @@ Published to `crypto-prices` topic by the Data Ingestion Service.
 }
 ```
 
-**Field Descriptions:**
-- `timestamp`: ISO 8601 UTC timestamp of the price data
-- `symbol`: Cryptocurrency symbol (BTC, ETH)
-- `price_usd`: Current price in USD
-- `volume_24h`: 24-hour trading volume in USD
-- `market_cap`: Total market capitalization in USD
-- `price_change_24h`: 24-hour price change percentage
-- `source`: Data provider identifier
-
-### 4.3 Trading Signal Schema
-
-Published to `trading-signals` topic by Signal Detection Services.
-
+### Trading Signal (trading-signals topic)
 ```json
 {
   "timestamp": "2024-06-16T14:30:05Z",
@@ -192,19 +72,7 @@ Published to `trading-signals` topic by Signal Detection Services.
 }
 ```
 
-**Field Descriptions:**
-- `timestamp`: Signal generation timestamp
-- `symbol`: Cryptocurrency symbol
-- `signal_type`: Type of signal (`moving_average_crossover`, `volume_spike`)
-- `signal_strength`: Signal confidence (`weak`, `moderate`, `strong`)
-- `direction`: Market direction (`bullish`, `bearish`, `neutral`)
-- `details`: Signal-specific metadata (varies by signal type)
-- `service_id`: Identifying the generating service for debugging
-
-### 4.4 Volume Spike Signal Details
-
-For `volume_spike` signal type, the details object contains:
-
+For volume spikes, details contains:
 ```json
 {
   "details": {
@@ -216,233 +84,63 @@ For `volume_spike` signal type, the details object contains:
 }
 ```
 
-## 5. Service Specifications
+## 4. Service Specifications
 
-### 5.1 Data Ingestion Service
+### Data Ingestion Service
+- **Language**: Python
+- **Function**: Fetch data from CoinGecko API and publish to Kafka
+- **Configuration**: Polling interval, supported symbols
+- **Error Handling**: Continue on API failures, retry Kafka publishing
 
-**Responsibilities:**
-- Fetch cryptocurrency market data from CoinGecko API
-- Transform raw API responses into standardized price events
-- Publish price events to Kafka with proper error handling
+### Moving Average Service
+- **Language**: Go
+- **Function**: Calculate SMA 20/50 and detect crossovers
+- **State**: In-memory price history (last 100 points per symbol)
+- **Signals**: Golden cross (bullish), Death cross (bearish)
+- **Requirement**: Minimum 50 data points before generating signals
 
-**Configuration:**
-- Polling interval: 60 seconds
-- Supported symbols: BTC, ETH (configurable via environment variables)
-- API timeout: 30 seconds with exponential backoff retry
+### Volume Spike Service
+- **Language**: Go
+- **Function**: Detect volume spikes above 7-day average
+- **State**: Rolling 7-day volume history per symbol
+- **Threshold**: Configurable (default 1.3x average volume)
+- **Signal Strength**: Based on spike magnitude
 
-**Error Handling:**
-- API failures: Log error and continue with next polling cycle
-- Kafka publishing failures: Retry up to 3 times with backoff
-- Invalid API responses: Log and skip malformed data
+### Alert Service
+- **Language**: Go
+- **Function**: Consume signals and generate notifications
+- **Output**: Console logs and structured JSON
+- **Rate Limiting**: Per-symbol cooldown periods
 
-**Health Checks:**
-- `/health` endpoint for Kubernetes liveness probe
-- `/ready` endpoint for readiness probe (checks Kafka connectivity)
+## 5. Technology Stack
 
-### 5.2 Moving Average Signal Detection Service
+- **Languages**: Python (data processing), Go (signal processing)
+- **Message Broker**: Apache Kafka
+- **Deployment**: Kubernetes with Helm charts
+- **External API**: CoinGecko (free tier)
+- **Containerization**: Docker
 
-**Responsibilities:**
-- Consume price events from `crypto-prices` topic
-- Calculate Simple Moving Averages (SMA 20 and SMA 50)
-- Detect crossover patterns and generate trading signals
-- Maintain price history for moving average calculations
+## 6. Deployment
 
-**Signal Logic:**
-- Golden Cross: SMA 20 crosses above SMA 50 (bullish signal)
-- Death Cross: SMA 20 crosses below SMA 50 (bearish signal)
-- Minimum 50 data points required before generating signals
+- **Kubernetes**: All services deployed as containers
+- **Helm**: Template-based deployment and configuration
+- **Namespace**: `crypto-trackers`
+- **Health Checks**: `/health` and `/ready` endpoints for all services
+- **Scaling**: Horizontal scaling for signal detection services
 
-**State Management:**
-- In-memory price history (last 100 data points per symbol)
-- No persistent storage required (stateless on restart)
+## 7. Monitoring
 
-### 5.3 Volume Spike Detection Service
+### Health Monitoring
+- Kubernetes liveness and readiness probes
+- Service health endpoints
 
-**Responsibilities:**
-- Consume price events from `crypto-prices` topic
-- Calculate 7-day average volume for each cryptocurrency
-- Detect volume spikes above configurable threshold
-- Generate volume spike trading signals
+### Logging
+- Structured JSON logs to stdout
+- Standard fields: timestamp, level, service, message
+- Log levels: INFO, WARN, ERROR, DEBUG
 
-**Signal Logic:**
-- Spike threshold: Current volume > 1.3x average 7-day volume
-- Signal strength based on spike magnitude (1.3x = weak, 2.0x+ = strong)
-
-**State Management:**
-- Rolling 7-day volume history per cryptocurrency
-- In-memory storage with circular buffer implementation
-
-### 5.4 Alert Service
-
-**Responsibilities:**
-- Consume all trading signals from `trading-signals` topic
-- Format and output alerts to configured destinations
-- Aggregate signals to prevent spam (rate limiting)
-
-**Output Formats:**
-- Structured JSON logs for observability
-- Console output for development/debugging
-- Extensible for future notification channels (webhooks, email)
-
-**Rate Limiting:**
-- Maximum 1 alert per symbol per 5-minute window
-- Configurable cooldown periods per signal type
-
-## 6. Deployment Strategy
-
-### 6.1 Helm-Based Kubernetes Architecture
-
-The system deploys via Helm charts as a collection of Kubernetes resources organized in a dedicated namespace (`crypto-signals`). All deployments are managed through the `helm/crypto-signals/` chart.
-
-**Resource Types (via Helm Templates):**
-- **StatefulSet**: Kafka cluster with persistent storage
-- **Deployments**: All application services (stateless)
-- **Services**: Internal service discovery and load balancing
-- **ConfigMaps**: Environment-specific configuration
-- **Secrets**: API keys and sensitive configuration
-- **PersistentVolumes**: Kafka data storage
-- **Jobs**: Topic creation and initialization tasks
-
-### 6.2 Kafka Deployment
-
-**StatefulSet Configuration:**
-- 3 Kafka brokers for high availability
-- Persistent storage: 10GB per broker
-- Resource requests: 1 CPU, 2GB RAM per broker
-- Anti-affinity rules to distribute brokers across nodes
-
-**Topic Configuration:**
-- `crypto-prices`: 2 partitions, replication factor 3
-- `trading-signals`: 2 partitions, replication factor 3
-- Auto-create disabled for better control
-
-### 6.3 Application Services Deployment
-
-**Data Ingestion Service:**
-- Single replica (polling nature doesn't require multiple instances)
-- Resource requests: 0.2 CPU, 256MB RAM
-- Environment variables for API configuration and polling interval
-
-**Signal Detection Services:**
-- 2 replicas each for availability
-- Resource requests: 0.3 CPU, 512MB RAM
-- Horizontal Pod Autoscaler based on CPU utilization (70% threshold)
-
-**Alert Service:**
-- Single replica with readiness for scaling
-- Resource requests: 0.1 CPU, 128MB RAM
-
-### 6.4 Service Discovery and Networking
-
-**Internal Services:**
-- ClusterIP services for Kafka brokers
-- Service discovery via Kubernetes DNS
-- No external exposure required for application services
-
-**Health Checks:**
-- Liveness probes on `/health` endpoints
-- Readiness probes on `/ready` endpoints
-- Initial delay: 30 seconds, period: 10 seconds
-
-### 6.5 Configuration Management
-
-**Helm Values (`values.yaml`):**
-- Centralized configuration for all services and infrastructure
-- Environment-specific overrides for dev/staging/production
-- Feature flags for enabling/disabling components
-
-**ConfigMaps (Generated from Helm Templates):**
-- `crypto-config`: Supported symbols, polling intervals, thresholds
-- `kafka-config`: Broker addresses, topic names, consumer group IDs
-
-**Secrets (Generated from Helm Templates):**
-- `api-secrets`: CoinGecko API key (if premium tier used)
-- Base64 encoded and mounted as environment variables
-
-### 6.6 Scaling Strategy
-
-**Vertical Scaling:**
-- Resource limits set to 2x requests for burst capacity
-- Memory limits prevent OOM kills during data processing spikes
-
-**Horizontal Scaling:**
-- HPA configured for signal detection services
-- Kafka partitioning enables parallel processing
-- Stateless service design supports easy replica scaling
-
-## 7. Monitoring and Observability
-
-### 7.1 Logging Strategy
-
-**Structured Logging:**
-- JSON format for all application logs
-- Standard fields: timestamp, level, service, message, correlation_id
-- Kubernetes stdout/stderr collection for centralized logging
-
-**Log Levels:**
-- INFO: Normal operations, signal generations, API calls
-- WARN: Recoverable errors, API timeouts, retry attempts
-- ERROR: Service failures, unrecoverable errors, data corruption
-- DEBUG: Detailed processing information (disabled in production)
-
-### 7.2 Health Monitoring
-
-**Kubernetes Health Checks:**
-- Liveness probes prevent stuck containers
-- Readiness probes manage traffic routing
-- Startup probes handle slow initialization
-
-**Service Health Endpoints:**
-- `/health`: Basic service status
-- `/ready`: Dependencies check (Kafka connectivity, API availability)
-- HTTP 200 for healthy, 503 for unhealthy states
-
-### 7.3 Application Metrics
-
-**Key Performance Indicators:**
-- API call success rate and response times
-- Kafka message production/consumption rates
-- Signal generation frequency per cryptocurrency
-- Alert delivery success rates
-
-**Resource Metrics:**
-- CPU and memory utilization per service
-- Kafka topic partition usage and lag
-- Message throughput and processing latency
-
-### 7.4 Error Tracking
-
-**Error Categories:**
-- External API failures (rate limits, timeouts, invalid responses)
-- Kafka connectivity issues (broker unavailable, topic errors)
-- Data processing errors (malformed messages, calculation failures)
-- Resource constraints (memory exhaustion, CPU throttling)
-
-**Error Response:**
-- Graceful degradation for non-critical failures
-- Circuit breaker pattern for external API calls
-- Dead letter queues for unprocessable messages
-
-### 7.5 Operational Dashboards
-
-**System Overview:**
-- Service status and replica counts
-- Message flow rates through Kafka topics
-- Error rates and response times across services
-
-**Business Metrics:**
-- Signal generation trends by type and cryptocurrency
-- Alert delivery patterns and effectiveness
-- System uptime and availability metrics
-
-### 7.6 Alerting Strategy
-
-**Critical Alerts:**
-- Service unavailability (all replicas down)
-- Kafka cluster issues (broker failures, topic unavailable)
-- External API rate limit exceeded
-
-**Warning Alerts:**
-- High error rates (>5% over 10 minutes)
-- Resource utilization approaching limits (>80%)
-- Message processing lag increasing
+### Key Metrics
+- API call success rates
+- Signal generation frequency
+- Message processing rates
+- Error rates per service
