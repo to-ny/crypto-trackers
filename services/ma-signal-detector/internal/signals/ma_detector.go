@@ -44,6 +44,7 @@ func (ma *MADetector) ProcessPriceEvent(event *kafka.PriceEvent) error {
 			Prices: make([]float64, 0, MaxHistorySize),
 		}
 		ma.priceHistory[event.Symbol] = history
+		log.Printf("Started tracking price history for %s", event.Symbol)
 	}
 
 	history.mutex.Lock()
@@ -51,9 +52,12 @@ func (ma *MADetector) ProcessPriceEvent(event *kafka.PriceEvent) error {
 	if len(history.Prices) > MaxHistorySize {
 		history.Prices = history.Prices[1:]
 	}
+	priceCount := len(history.Prices)
 	history.mutex.Unlock()
 
-	if len(history.Prices) >= MinSignalSize {
+	log.Printf("Processed price event for %s: $%.2f (history: %d points)", event.Symbol, event.PriceUSD, priceCount)
+
+	if priceCount >= MinSignalSize {
 		return ma.checkForCrossover(event.Symbol, event.Timestamp)
 	}
 

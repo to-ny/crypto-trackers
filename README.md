@@ -15,6 +15,7 @@ Kubernetes-based system for cryptocurrency trading signal detection.
 - ZooKeeper (`zookeeper-service:2181`)
 - Topics: `crypto-prices`, `trading-signals`
 - Data Ingestion Service: Fetches BTC/ETH prices from CoinGecko API
+- MA Signal Detector: Detects SMA 20/50 crossovers and generates trading signals
 
 ## Usage
 
