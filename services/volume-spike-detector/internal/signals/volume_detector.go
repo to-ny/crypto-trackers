@@ -1,6 +1,8 @@
 package signals
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -14,19 +16,19 @@ const (
 )
 
 type VolumeHistory struct {
-	Volumes   []float64
+	Volumes    []float64
 	Timestamps []time.Time
-	mutex     sync.RWMutex
+	mutex      sync.RWMutex
 }
 
 type VolumeDetector struct {
 	volumeHistory map[string]*VolumeHistory
 	threshold     float64
 	mutex         sync.RWMutex
-	producer      *kafka.Producer
+	producer      kafka.SignalProducer
 }
 
-func NewVolumeDetector(producer *kafka.Producer, threshold float64) *VolumeDetector {
+func NewVolumeDetector(producer kafka.SignalProducer, threshold float64) *VolumeDetector {
 	return &VolumeDetector{
 		volumeHistory: make(map[string]*VolumeHistory),
 		threshold:     threshold,
@@ -87,7 +89,7 @@ func (vd *VolumeDetector) checkForVolumeSpike(symbol string, timestamp time.Time
 	}
 
 	avg7Day := calculateAverage(volumeHistory[:len(volumeHistory)-1])
-	
+
 	if avg7Day == 0 {
 		return nil
 	}
@@ -124,12 +126,15 @@ func (vd *VolumeDetector) publishVolumeSpike(symbol string, timestamp time.Time,
 		ServiceID: "volume-detector-v1",
 	}
 
-	if err := vd.producer.PublishSignal("trading-signals", signal); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := vd.producer.PublishSignal(ctx, "trading-signals", signal); err != nil {
 		log.Printf("Failed to publish volume spike signal for %s: %v", symbol, err)
-		return err
+		return fmt.Errorf("failed to publish volume spike signal for %s: %w", symbol, err)
 	}
 
-	log.Printf("Published volume spike signal for %s (%.1fx spike: current=%.0f, avg=%.0f)", 
+	log.Printf("Published volume spike signal for %s (%.1fx spike: current=%.0f, avg=%.0f)",
 		symbol, spikeMultiplier, currentVolume, avg7Day)
 	return nil
 }

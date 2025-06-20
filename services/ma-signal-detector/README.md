@@ -10,6 +10,13 @@ go build ./cmd/main.go
 
 # Run locally
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092 ./main
+
+# Run tests
+go test ./... -v
+
+# Code quality
+go fmt ./...
+go vet ./...
 ```
 
 ## Environment Variables

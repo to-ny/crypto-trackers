@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o ma-signal-detector ./cmd/main.go
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates curl
+RUN apk --no-cache add ca-certificates curl tini
 RUN addgroup -g 1000 appuser && adduser -D -u 1000 -G appuser appuser
 
 WORKDIR /app
@@ -23,5 +23,7 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["tini", "--"]
 
 CMD ["./ma-signal-detector"]

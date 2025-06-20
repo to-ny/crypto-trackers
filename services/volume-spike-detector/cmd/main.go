@@ -30,7 +30,7 @@ type Server struct {
 	config   *config.Config
 	ready    bool
 	consumer *kafka.Consumer
-	producer *kafka.Producer
+	producer kafka.SignalProducer
 	detector *signals.VolumeDetector
 }
 

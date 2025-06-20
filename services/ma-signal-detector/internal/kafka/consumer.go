@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/IBM/sarama"
@@ -26,7 +27,7 @@ func NewConsumer(brokers []string, groupID string, topics []string, eventHandler
 
 	client, err := sarama.NewConsumerGroup(brokers, groupID, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create kafka consumer group: %w", err)
 	}
 
 	return &Consumer{

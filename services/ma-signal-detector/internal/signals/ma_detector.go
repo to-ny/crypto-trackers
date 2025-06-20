@@ -1,6 +1,8 @@
 package signals
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"ma-signal-detector/internal/kafka"
 	"sync"
@@ -23,10 +25,10 @@ type MADetector struct {
 	priceHistory map[string]*PriceHistory
 	lastSignals  map[string]string
 	mutex        sync.RWMutex
-	producer     *kafka.Producer
+	producer     kafka.SignalProducer
 }
 
-func NewMADetector(producer *kafka.Producer) *MADetector {
+func NewMADetector(producer kafka.SignalProducer) *MADetector {
 	return &MADetector{
 		priceHistory: make(map[string]*PriceHistory),
 		lastSignals:  make(map[string]string),
@@ -120,9 +122,12 @@ func (ma *MADetector) publishSignal(symbol string, timestamp time.Time, crossove
 		ServiceID: "ma-detector-v1",
 	}
 
-	if err := ma.producer.PublishSignal("trading-signals", signal); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := ma.producer.PublishSignal(ctx, "trading-signals", signal); err != nil {
 		log.Printf("Failed to publish signal for %s: %v", symbol, err)
-		return err
+		return fmt.Errorf("failed to publish %s signal for %s: %w", crossoverType, symbol, err)
 	}
 
 	log.Printf("Published %s signal for %s (SMA20: %.2f, SMA50: %.2f)", crossoverType, symbol, sma20, sma50)
