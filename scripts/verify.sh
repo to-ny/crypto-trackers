@@ -1,37 +1,60 @@
 #!/bin/bash
 set -e
 
-if ! helm list | grep -q crypto-trackers; then
-    echo "Error: crypto-trackers deployment not found"
+check_pod_ready() {
+    kubectl get pod $1 -n crypto-trackers -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "False"
+}
+
+check_deployment_ready() {
+    kubectl get deployment $1 -n crypto-trackers -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0"
+}
+
+check_health() {
+    kubectl exec -n crypto-trackers deployment/$1 -- curl -s http://localhost:8080/health 2>/dev/null | grep -o '"status":"[^"]*"' | cut -d'"' -f4 || echo "FAILED"
+}
+
+run_temp_pod() {
+    local name=$1
+    local image=$2
+    local cmd=$3
+    
+    kubectl run $name --image=$image --restart=Never -n crypto-trackers -- sh -c "$cmd" >/dev/null 2>&1
+    sleep 5
+    local output=$(kubectl logs $name -n crypto-trackers 2>/dev/null || echo "failed")
+    kubectl delete pod $name -n crypto-trackers >/dev/null 2>&1 || true
+    echo "$output"
+}
+
+if ! helm list -n crypto-trackers | grep -q crypto-trackers; then
+    echo "Error: deployment not found"
     exit 1
 fi
 
-echo "Deployment status:"
-kubectl get all -n crypto-trackers
+KAFKA_READY=$(check_pod_ready kafka-0)
+ZK_READY=$(check_pod_ready zookeeper-0)
 
-KAFKA_READY=$(kubectl get pod kafka-0 -n crypto-trackers -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-ZK_READY=$(kubectl get pod zookeeper-0 -n crypto-trackers -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+DATA_READY=$(check_deployment_ready crypto-trackers-data-ingestion)
+MA_READY=$(check_deployment_ready crypto-trackers-ma-signal-detector)
+VOLUME_READY=$(check_deployment_ready crypto-trackers-volume-spike-detector)
+ALERT_READY=$(check_deployment_ready crypto-trackers-alert-service)
 
-echo "Pod status:"
-echo "  Kafka: $KAFKA_READY"
-echo "  ZooKeeper: $ZK_READY"
+CONN_OUTPUT=$(run_temp_pod verify-connectivity busybox:1.35 "nc -zv zookeeper-service 2181 && nc -zv kafka-service 9092")
+TOPICS_OUTPUT=$(run_temp_pod kafka-verify confluentinc/cp-kafka:7.4.0 "kafka-topics --bootstrap-server kafka-service:9092 --list")
 
-kubectl run verify-connectivity --image=busybox:1.35 --restart=Never -n crypto-trackers -- sh -c "nc -zv zookeeper-service 2181 && nc -zv kafka-service 9092" >/dev/null 2>&1
-sleep 5
-CONN_OUTPUT=$(kubectl logs verify-connectivity -n crypto-trackers 2>/dev/null || echo "failed")
-kubectl delete pod verify-connectivity -n crypto-trackers >/dev/null 2>&1 || true
+DATA_HEALTH=$(check_health crypto-trackers-data-ingestion)
+MA_HEALTH=$(check_health crypto-trackers-ma-signal-detector)
+VOLUME_HEALTH=$(check_health crypto-trackers-volume-spike-detector)
+ALERT_HEALTH=$(check_health crypto-trackers-alert-service)
 
-kubectl run kafka-verify --image=confluentinc/cp-kafka:7.4.0 --restart=Never -n crypto-trackers -- kafka-topics --bootstrap-server kafka-service:9092 --list >/dev/null 2>&1
-sleep 10
-TOPICS_OUTPUT=$(kubectl logs kafka-verify -n crypto-trackers 2>/dev/null || echo "failed")
-kubectl delete pod kafka-verify -n crypto-trackers >/dev/null 2>&1 || true
+echo "Infrastructure: Kafka=$KAFKA_READY ZooKeeper=$ZK_READY"
+echo "Services: Data=$([[ $DATA_READY == "1" ]] && echo "READY" || echo "NOT READY") MA=$([[ $MA_READY == "1" ]] && echo "READY" || echo "NOT READY") Volume=$([[ $VOLUME_READY == "1" ]] && echo "READY" || echo "NOT READY") Alert=$([[ $ALERT_READY == "1" ]] && echo "READY" || echo "NOT READY")"
+echo "Connectivity: $([[ $CONN_OUTPUT =~ "open" ]] && echo "OK" || echo "FAILED")"
+echo "Topics: $([[ $TOPICS_OUTPUT =~ "crypto-prices" && $TOPICS_OUTPUT =~ "trading-signals" ]] && echo "OK" || echo "MISSING")"
+echo "Health: Data=$DATA_HEALTH MA=$MA_HEALTH Volume=$VOLUME_HEALTH Alert=$ALERT_HEALTH"
 
-echo "Connectivity: $(if echo "$CONN_OUTPUT" | grep -q "open"; then echo "OK"; else echo "FAILED"; fi)"
-echo "Topics: $(if echo "$TOPICS_OUTPUT" | grep -q "crypto-prices" && echo "$TOPICS_OUTPUT" | grep -q "trading-signals"; then echo "crypto-prices, trading-signals"; else echo "MISSING"; fi)"
-
-if [ "$KAFKA_READY" = "True" ] && [ "$ZK_READY" = "True" ] && echo "$CONN_OUTPUT" | grep -q "open" && echo "$TOPICS_OUTPUT" | grep -q "crypto-prices"; then
-    echo "Verification successful"
+if [[ $KAFKA_READY == "True" && $ZK_READY == "True" && $CONN_OUTPUT =~ "open" && $TOPICS_OUTPUT =~ "crypto-prices" && $DATA_READY == "1" && $MA_READY == "1" && $VOLUME_READY == "1" && $ALERT_READY == "1" && $DATA_HEALTH == "healthy" && $MA_HEALTH == "healthy" && $VOLUME_HEALTH == "healthy" && $ALERT_HEALTH == "healthy" ]]; then
+    echo "System verification SUCCESSFUL"
 else
-    echo "Verification failed"
+    echo "System verification FAILED"
     exit 1
 fi

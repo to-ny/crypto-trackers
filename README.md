@@ -1,35 +1,26 @@
 # Crypto Trading Signal Detector
 
-Kubernetes-based system for cryptocurrency trading signal detection.
+Kubernetes-based cryptocurrency trading signal detection system.
 
-## Prerequisites
+## Services
 
-- Kubernetes cluster
-- Helm 3.x
-- kubectl configured
+- **Data Ingestion** (Python): Fetches BTC/ETH prices from CoinGecko
+- **MA Signal Detector** (Go): Detects SMA 20/50 crossovers  
+- **Volume Spike Detector** (Go): Detects volume spikes
+- **Alert Service** (Go): Rate-limited alerts
 
-## Components
-
-- Namespace: crypto-trackers
-- Kafka cluster (`kafka-service:9092`)
-- ZooKeeper (`zookeeper-service:2181`)
-- Topics: `crypto-prices`, `trading-signals`
-- Data Ingestion Service: Fetches BTC/ETH prices from CoinGecko API
-- MA Signal Detector: Detects SMA 20/50 crossovers and generates trading signals
-- Volume Spike Detector: Detects volume spikes above 7-day average threshold
-
-## Usage
+## Development
 
 ```bash
-# Deploy the system
-make deploy
+make build    # Build images
+make test     # Run tests
+make lint     # Format code
+```
 
-# Verify deployment
-make verify
+## Deployment
 
-# Cleanup resources
-make cleanup
-
-# Show available commands
-make help
+```bash
+make deploy   # Deploy system
+make verify   # Check status
+make cleanup  # Remove deployment
 ```
