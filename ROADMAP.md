@@ -207,35 +207,41 @@ This roadmap is designed for AI coding agents. Each task is self-contained and i
 - Rate limiting prevents spam
 - Alert output is clearly formatted and informative
 
-## Phase 6: System Integration
+## Phase 6: Monitoring and Observability
 
-### Task 6.1: End-to-End Testing
-**Objective:** Verify complete system functionality.
-
-**Requirements:**
-- Deploy all services via Helm
-- Verify data flows through entire pipeline
-- Test with live CoinGecko data
-- Validate signal generation for both BTC and ETH
-
-**Acceptance Criteria:**
-- Complete pipeline from API → signals → alerts works
-- All services remain healthy under normal operation
-- Signals are generated for actual market conditions
-
-### Task 6.2: Documentation and Cleanup
-**Objective:** Finalize system documentation.
+### Task 6.1: Metrics Collection
+**Objective:** Add metrics endpoints to all services for monitoring.
 
 **Requirements:**
-- Update README.md with deployment instructions
-- Add service-specific READMEs where needed
-- Document any configuration options or operational procedures
-- Clean up any temporary files or unused code
+- Add `/metrics` endpoint to all services (Prometheus format)
+- Collect key metrics: API call success rates, message processing rates, signal generation counts
+- Add custom metrics: signals per symbol, alert rates, Kafka lag
+- Include service health and uptime metrics
 
 **Acceptance Criteria:**
-- System can be deployed by following README instructions
-- All services have basic operational documentation
-- Code is clean and production-ready
+- All services expose metrics in Prometheus format
+- Metrics include both system and business metrics
+- Metrics are accurate and update in real-time
+
+### Task 6.2: Monitoring Dashboard
+**Objective:** Create operational dashboard for system visibility.
+
+**Requirements:**
+- Deploy Prometheus and Grafana via Helm templates
+- Create dashboard showing: service health, message throughput, signal generation trends
+- Add alerts for service failures and high error rates
+- Include business metrics: signals per hour, top active cryptocurrencies
+
+**Dashboard Sections:**
+- System Health: Service status, resource usage, error rates
+- Data Flow: API calls, Kafka throughput, processing latency
+- Trading Signals: Signal generation over time, signal types breakdown
+- Alerts: Alert delivery rates, rate limiting effectiveness
+
+**Acceptance Criteria:**
+- Grafana dashboard shows real-time system metrics
+- All services are monitored and visible
+- Dashboard provides actionable insights for operations
 
 ## Success Criteria
 
