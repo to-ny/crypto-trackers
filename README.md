@@ -16,6 +16,7 @@ Kubernetes-based system for cryptocurrency trading signal detection.
 - Topics: `crypto-prices`, `trading-signals`
 - Data Ingestion Service: Fetches BTC/ETH prices from CoinGecko API
 - MA Signal Detector: Detects SMA 20/50 crossovers and generates trading signals
+- Volume Spike Detector: Detects volume spikes above 7-day average threshold
 
 ## Usage
 

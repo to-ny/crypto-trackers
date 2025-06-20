@@ -53,6 +53,26 @@ maSignalDetector:
       memory: "256Mi"
       cpu: "200m"
 
+volumeSpikeDetector:
+  replicaCount: 1
+  image:
+    repository: crypto-trackers/volume-spike-detector
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  kafkaGroupId: "volume-spike-detector"
+  logLevel: "INFO"
+  spikeThreshold: "1.3"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
 config:
   kafka:
     bootstrapServers: "kafka-service:9092"

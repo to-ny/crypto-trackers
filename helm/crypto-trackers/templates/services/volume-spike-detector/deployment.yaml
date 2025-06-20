@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "crypto-trackers.fullname" . }}-volume-spike-detector
+  labels:
+    {{- include "crypto-trackers.labels" . | nindent 4 }}
+    app.kubernetes.io/component: volume-spike-detector
+spec:
+  replicas: {{ .Values.volumeSpikeDetector.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "crypto-trackers.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: volume-spike-detector
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "crypto-trackers.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: volume-spike-detector
+    spec:
+      containers:
+      - name: volume-spike-detector
+        image: "{{ .Values.volumeSpikeDetector.image.repository }}:{{ .Values.volumeSpikeDetector.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.volumeSpikeDetector.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: kafka-service:9092
+        - name: KAFKA_GROUP_ID
+          value: "{{ .Values.volumeSpikeDetector.kafkaGroupId }}"
+        - name: PORT
+          value: "8080"
+        - name: LOG_LEVEL
+          value: "{{ .Values.volumeSpikeDetector.logLevel }}"
+        - name: SPIKE_THRESHOLD
+          value: "{{ .Values.volumeSpikeDetector.spikeThreshold }}"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          {{- toYaml .Values.volumeSpikeDetector.resources | nindent 12 }}
