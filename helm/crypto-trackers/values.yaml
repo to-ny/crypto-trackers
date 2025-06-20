@@ -16,6 +16,24 @@ kafka:
       memory: "1Gi"
       cpu: "500m"
 
+dataIngestion:
+  replicaCount: 1
+  image:
+    repository: crypto-trackers/data-ingestion
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  pollingInterval: 60
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
 config:
   kafka:
     bootstrapServers: "kafka-service:9092"
