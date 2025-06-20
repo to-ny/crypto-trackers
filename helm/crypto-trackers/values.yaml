@@ -73,6 +73,26 @@ volumeSpikeDetector:
       memory: "256Mi"
       cpu: "200m"
 
+alertService:
+  replicaCount: 1
+  image:
+    repository: crypto-trackers/alert-service
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  kafkaGroupId: "alert-service"
+  logLevel: "INFO"
+  cooldownMinutes: "5"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
 config:
   kafka:
     bootstrapServers: "kafka-service:9092"

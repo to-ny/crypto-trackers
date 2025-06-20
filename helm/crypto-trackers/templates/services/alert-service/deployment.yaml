@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "crypto-trackers.fullname" . }}-alert-service
+  labels:
+    {{- include "crypto-trackers.labels" . | nindent 4 }}
+    app.kubernetes.io/component: alert-service
+spec:
+  replicas: {{ .Values.alertService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "crypto-trackers.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: alert-service
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "crypto-trackers.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: alert-service
+    spec:
+      containers:
+      - name: alert-service
+        image: "{{ .Values.alertService.image.repository }}:{{ .Values.alertService.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.alertService.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: kafka-service:9092
+        - name: KAFKA_GROUP_ID
+          value: "{{ .Values.alertService.kafkaGroupId }}"
+        - name: PORT
+          value: "8080"
+        - name: LOG_LEVEL
+          value: "{{ .Values.alertService.logLevel }}"
+        - name: COOLDOWN_MINUTES
+          value: "{{ .Values.alertService.cooldownMinutes }}"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          {{- toYaml .Values.alertService.resources | nindent 12 }}
