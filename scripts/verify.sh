@@ -55,7 +55,7 @@ echo "Monitoring: Prometheus=$([[ $PROMETHEUS_READY == "1" ]] && echo "READY" ||
 echo "Connectivity: $([[ $CONN_OUTPUT =~ "open" ]] && echo "OK" || echo "FAILED")"
 echo "Topics: $([[ $TOPICS_OUTPUT =~ "crypto-prices" && $TOPICS_OUTPUT =~ "trading-signals" ]] && echo "OK" || echo "MISSING")"
 echo "Health: Data=$DATA_HEALTH MA=$MA_HEALTH Volume=$VOLUME_HEALTH Alert=$ALERT_HEALTH"
-echo "Monitoring Health: Prometheus=$([[ $PROMETHEUS_HEALTH =~ "ok" ]] && echo "OK" || echo "FAILED")"
+echo "Monitoring Health: Prometheus=$([[ $PROMETHEUS_HEALTH =~ "Healthy" ]] && echo "OK" || echo "FAILED")"
 
 if [[ $KAFKA_READY == "True" && $ZK_READY == "True" && $CONN_OUTPUT =~ "open" && $TOPICS_OUTPUT =~ "crypto-prices" && $DATA_READY == "1" && $MA_READY == "1" && $VOLUME_READY == "1" && $ALERT_READY == "1" && $PROMETHEUS_READY == "1" && $DATA_HEALTH == "healthy" && $MA_HEALTH == "healthy" && $VOLUME_HEALTH == "healthy" && $ALERT_HEALTH == "healthy" ]]; then
     echo "System verification SUCCESSFUL"
