@@ -6,26 +6,38 @@ import (
 	"log"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type AlertProcessor struct {
-	rateLimiter *RateLimiter
+	rateLimiter      *RateLimiter
+	alertsReceived   prometheus.CounterVec
+	alertsSent       prometheus.CounterVec
+	alertsRateLimited prometheus.CounterVec
 }
 
-func NewAlertProcessor(cooldownMinutes int) *AlertProcessor {
+func NewAlertProcessor(cooldownMinutes int, alertsReceived, alertsSent, alertsRateLimited prometheus.CounterVec) *AlertProcessor {
 	return &AlertProcessor{
-		rateLimiter: NewRateLimiter(cooldownMinutes),
+		rateLimiter:       NewRateLimiter(cooldownMinutes),
+		alertsReceived:    alertsReceived,
+		alertsSent:        alertsSent,
+		alertsRateLimited: alertsRateLimited,
 	}
 }
 
 func (a *AlertProcessor) ProcessSignal(signal *kafka.TradingSignal) error {
+	a.alertsReceived.WithLabelValues(signal.Symbol, signal.SignalType).Inc()
+
 	if !a.rateLimiter.CanSendAlert(signal.Symbol) {
+		a.alertsRateLimited.WithLabelValues(signal.Symbol).Inc()
 		log.Printf("SKIPPED: Alert for %s within cooldown period (last sent < 5 min ago)", signal.Symbol)
 		return nil
 	}
 
 	a.sendAlert(signal)
 	a.rateLimiter.RecordAlert(signal.Symbol)
+	a.alertsSent.WithLabelValues(signal.Symbol).Inc()
 	log.Printf("SENT: Alert recorded for %s", signal.Symbol)
 
 	return nil

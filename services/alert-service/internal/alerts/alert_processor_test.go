@@ -4,10 +4,25 @@ import (
 	"alert-service/internal/kafka"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestAlertProcessor_ProcessSignal(t *testing.T) {
-	processor := NewAlertProcessor(5)
+	alertsReceived := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_received", Help: "test"},
+		[]string{"symbol", "signal_type"},
+	)
+	alertsSent := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_sent", Help: "test"},
+		[]string{"symbol"},
+	)
+	alertsRateLimited := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_rate_limited", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	processor := NewAlertProcessor(5, *alertsReceived, *alertsSent, *alertsRateLimited)
 
 	signal := &kafka.TradingSignal{
 		Timestamp:      time.Now(),
@@ -52,7 +67,20 @@ func TestAlertProcessor_ProcessSignal(t *testing.T) {
 }
 
 func TestAlertProcessor_FormatAlert(t *testing.T) {
-	processor := NewAlertProcessor(5)
+	alertsReceived := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_received", Help: "test"},
+		[]string{"symbol", "signal_type"},
+	)
+	alertsSent := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_sent", Help: "test"},
+		[]string{"symbol"},
+	)
+	alertsRateLimited := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_rate_limited", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	processor := NewAlertProcessor(5, *alertsReceived, *alertsSent, *alertsRateLimited)
 
 	signal := &kafka.TradingSignal{
 		Timestamp:      time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),

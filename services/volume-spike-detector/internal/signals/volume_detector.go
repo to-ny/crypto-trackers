@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 	"volume-spike-detector/internal/kafka"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -22,21 +24,34 @@ type VolumeHistory struct {
 }
 
 type VolumeDetector struct {
-	volumeHistory map[string]*VolumeHistory
-	threshold     float64
-	mutex         sync.RWMutex
-	producer      kafka.SignalProducer
+	volumeHistory        map[string]*VolumeHistory
+	threshold            float64
+	mutex                sync.RWMutex
+	producer             kafka.SignalProducer
+	eventsProcessed      prometheus.CounterVec
+	spikesDetected       prometheus.CounterVec
+	processingTime       prometheus.HistogramVec
 }
 
-func NewVolumeDetector(producer kafka.SignalProducer, threshold float64) *VolumeDetector {
+func NewVolumeDetector(producer kafka.SignalProducer, threshold float64, eventsProcessed, spikesDetected prometheus.CounterVec, processingTime prometheus.HistogramVec) *VolumeDetector {
 	return &VolumeDetector{
-		volumeHistory: make(map[string]*VolumeHistory),
-		threshold:     threshold,
-		producer:      producer,
+		volumeHistory:   make(map[string]*VolumeHistory),
+		threshold:       threshold,
+		producer:        producer,
+		eventsProcessed: eventsProcessed,
+		spikesDetected:  spikesDetected,
+		processingTime:  processingTime,
 	}
 }
 
 func (vd *VolumeDetector) ProcessPriceEvent(event *kafka.PriceEvent) error {
+	start := time.Now()
+	defer func() {
+		vd.processingTime.WithLabelValues(event.Symbol).Observe(time.Since(start).Seconds())
+	}()
+
+	vd.eventsProcessed.WithLabelValues(event.Symbol).Inc()
+
 	vd.mutex.Lock()
 	defer vd.mutex.Unlock()
 
@@ -104,6 +119,8 @@ func (vd *VolumeDetector) checkForVolumeSpike(symbol string, timestamp time.Time
 }
 
 func (vd *VolumeDetector) publishVolumeSpike(symbol string, timestamp time.Time, currentVolume, avg7Day, spikeMultiplier float64) error {
+	vd.spikesDetected.WithLabelValues(symbol).Inc()
+
 	signalStrength := "medium"
 	if spikeMultiplier > 2.0 {
 		signalStrength = "strong"

@@ -6,6 +6,7 @@ from threading import Thread
 from api.coingecko import CoinGeckoClient
 from flask import Flask, jsonify
 from kafka_client.producer import KafkaEventProducer
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -16,6 +17,10 @@ app = Flask(__name__)
 
 coingecko_client = CoinGeckoClient()
 kafka_producer = None
+
+api_calls_total = Counter('coingecko_api_calls_total', 'Total number of CoinGecko API calls', ['status'])
+price_events_published = Counter('price_events_published_total', 'Total number of price events published', ['symbol'])
+api_response_time = Histogram('coingecko_api_response_seconds', 'Time spent waiting for CoinGecko API response')
 
 
 @app.route("/health")
@@ -30,6 +35,11 @@ def ready():
     return jsonify({"status": "ready" if ready_status else "not ready"})
 
 
+@app.route("/metrics")
+def metrics():
+    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+
+
 def main_loop():
     global kafka_producer
 
@@ -41,20 +51,27 @@ def main_loop():
     while True:
         try:
             logger.info("Fetching price data from CoinGecko")
-            price_events = coingecko_client.fetch_price_data()
+            
+            with api_response_time.time():
+                price_events = coingecko_client.fetch_price_data()
 
             if price_events:
+                api_calls_total.labels(status='success').inc()
                 success = kafka_producer.publish_price_events(price_events)
                 if success:
+                    for event in price_events:
+                        price_events_published.labels(symbol=event['symbol']).inc()
                     logger.info(
                         f"Successfully processed {len(price_events)} price events"
                     )
                 else:
                     logger.error("Failed to publish price events to Kafka")
             else:
+                api_calls_total.labels(status='failure').inc()
                 logger.warning("No price data retrieved from CoinGecko")
 
         except Exception as e:
+            api_calls_total.labels(status='error').inc()
             logger.error(f"Error in main loop: {e}")
 
         time.sleep(polling_interval)

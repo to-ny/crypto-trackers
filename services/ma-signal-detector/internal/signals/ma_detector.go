@@ -7,6 +7,8 @@ import (
 	"ma-signal-detector/internal/kafka"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -22,21 +24,32 @@ type PriceHistory struct {
 }
 
 type MADetector struct {
-	priceHistory map[string]*PriceHistory
-	lastSignals  map[string]string
-	mutex        sync.RWMutex
-	producer     kafka.SignalProducer
+	priceHistory         map[string]*PriceHistory
+	lastSignals          map[string]string
+	mutex                sync.RWMutex
+	producer             kafka.SignalProducer
+	priceEventsProcessed prometheus.CounterVec
+	signalsGenerated     prometheus.CounterVec
+	processingTime       prometheus.HistogramVec
 }
 
-func NewMADetector(producer kafka.SignalProducer) *MADetector {
+func NewMADetector(producer kafka.SignalProducer, priceEventsProcessed prometheus.CounterVec, signalsGenerated prometheus.CounterVec, processingTime prometheus.HistogramVec) *MADetector {
 	return &MADetector{
-		priceHistory: make(map[string]*PriceHistory),
-		lastSignals:  make(map[string]string),
-		producer:     producer,
+		priceHistory:         make(map[string]*PriceHistory),
+		lastSignals:          make(map[string]string),
+		producer:             producer,
+		priceEventsProcessed: priceEventsProcessed,
+		signalsGenerated:     signalsGenerated,
+		processingTime:       processingTime,
 	}
 }
 
 func (ma *MADetector) ProcessPriceEvent(event *kafka.PriceEvent) error {
+	timer := prometheus.NewTimer(ma.processingTime.WithLabelValues(event.Symbol))
+	defer timer.ObserveDuration()
+	
+	ma.priceEventsProcessed.WithLabelValues(event.Symbol).Inc()
+	
 	ma.mutex.Lock()
 	defer ma.mutex.Unlock()
 
@@ -101,6 +114,7 @@ func (ma *MADetector) checkForCrossover(symbol string, timestamp time.Time) erro
 
 	if signalType != "" && ma.lastSignals[symbol] != signalType {
 		ma.lastSignals[symbol] = signalType
+		ma.signalsGenerated.WithLabelValues(symbol, signalType).Inc()
 		return ma.publishSignal(symbol, timestamp, signalType, direction, currentSMA20, currentSMA50)
 	}
 

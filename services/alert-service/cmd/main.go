@@ -16,6 +16,8 @@ import (
 	"alert-service/internal/kafka"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HealthResponse struct {
@@ -24,6 +26,36 @@ type HealthResponse struct {
 
 type ReadyResponse struct {
 	Status string `json:"status"`
+}
+
+var (
+	alertsReceived = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "alerts_received_total",
+			Help: "Total number of alerts received",
+		},
+		[]string{"symbol", "signal_type"},
+	)
+	alertsSent = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "alerts_sent_total",
+			Help: "Total number of alerts sent",
+		},
+		[]string{"symbol"},
+	)
+	alertsRateLimited = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "alerts_rate_limited_total",
+			Help: "Total number of alerts rate limited",
+		},
+		[]string{"symbol"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(alertsReceived)
+	prometheus.MustRegister(alertsSent)
+	prometheus.MustRegister(alertsRateLimited)
 }
 
 type Server struct {
@@ -62,7 +94,7 @@ func (s *Server) setReady(ready bool) {
 func (s *Server) initializeKafka() error {
 	brokers := strings.Split(s.config.KafkaBootstrapServers, ",")
 
-	processor := alerts.NewAlertProcessor(s.config.CooldownMinutes)
+	processor := alerts.NewAlertProcessor(s.config.CooldownMinutes, *alertsReceived, *alertsSent, *alertsRateLimited)
 	s.processor = processor
 
 	consumer, err := kafka.NewConsumer(
@@ -86,6 +118,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/health", server.healthHandler).Methods("GET")
 	router.HandleFunc("/ready", server.readyHandler).Methods("GET")
+	router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.Port,

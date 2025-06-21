@@ -4,15 +4,31 @@ import (
 	"ma-signal-detector/internal/kafka"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestMADetector_EndToEndIntegration(t *testing.T) {
 	producer := &mockProducer{}
-	detector := NewMADetector(producer)
+	
+	priceEventsProcessed := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_price_events_processed", Help: "test"},
+		[]string{"symbol"},
+	)
+	signalsGenerated := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_signals_generated", Help: "test"},
+		[]string{"symbol", "signal_type"},
+	)
+	processingTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	detector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 	t.Run("golden cross signal generation", func(t *testing.T) {
 		producer.signals = nil
-		goldDetector := NewMADetector(producer)
+		goldDetector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 		basePrice := 50000.0
 		

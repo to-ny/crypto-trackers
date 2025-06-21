@@ -4,10 +4,25 @@ import (
 	"alert-service/internal/kafka"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestAlertProcessor_EndToEndIntegration(t *testing.T) {
-	processor := NewAlertProcessor(5)
+	alertsReceived := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_received", Help: "test"},
+		[]string{"symbol", "signal_type"},
+	)
+	alertsSent := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_sent", Help: "test"},
+		[]string{"symbol"},
+	)
+	alertsRateLimited := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_alerts_rate_limited", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	processor := NewAlertProcessor(5, *alertsReceived, *alertsSent, *alertsRateLimited)
 
 	t.Run("rate limiting integration", func(t *testing.T) {
 		signal := &kafka.TradingSignal{
@@ -82,7 +97,7 @@ func TestAlertProcessor_EndToEndIntegration(t *testing.T) {
 	})
 
 	t.Run("cooldown period verification", func(t *testing.T) {
-		shortProcessor := NewAlertProcessor(0)
+		shortProcessor := NewAlertProcessor(0, *alertsReceived, *alertsSent, *alertsRateLimited)
 
 		signal := &kafka.TradingSignal{
 			Timestamp:      time.Now(),

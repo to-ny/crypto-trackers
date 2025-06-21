@@ -16,6 +16,8 @@ import (
 	"ma-signal-detector/internal/signals"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HealthResponse struct {
@@ -24,6 +26,36 @@ type HealthResponse struct {
 
 type ReadyResponse struct {
 	Status string `json:"status"`
+}
+
+var (
+	priceEventsProcessed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "price_events_processed_total",
+			Help: "Total number of price events processed",
+		},
+		[]string{"symbol"},
+	)
+	signalsGenerated = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "trading_signals_generated_total",
+			Help: "Total number of trading signals generated",
+		},
+		[]string{"symbol", "type"},
+	)
+	processingTime = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "price_event_processing_seconds",
+			Help: "Time spent processing price events",
+		},
+		[]string{"symbol"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(priceEventsProcessed)
+	prometheus.MustRegister(signalsGenerated)
+	prometheus.MustRegister(processingTime)
 }
 
 type Server struct {
@@ -69,7 +101,7 @@ func (s *Server) initializeKafka() error {
 	}
 	s.producer = producer
 
-	detector := signals.NewMADetector(producer)
+	detector := signals.NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 	s.detector = detector
 
 	consumer, err := kafka.NewConsumer(
@@ -93,6 +125,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/health", server.healthHandler).Methods("GET")
 	router.HandleFunc("/ready", server.readyHandler).Methods("GET")
+	router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.Port,

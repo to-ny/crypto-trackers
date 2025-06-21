@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: {{ .Values.namespace }}
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-service:9090
+        isDefault: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-config
+  namespace: {{ .Values.namespace }}
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        folder: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: {{ .Values.namespace }}
+data:
+  crypto-trackers.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Crypto Trading Signal Detector",
+        "tags": [],
+        "style": "dark",
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Service Health",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up",
+                "legendFormat": "{{ "{{" }}job{{ "}}" }}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "API Calls Success Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "rate(coingecko_api_calls_total{status=\"success\"}[5m]) / rate(coingecko_api_calls_total[5m]) * 100",
+                "legendFormat": "Success Rate %"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Price Events per Symbol",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(price_events_published_total[5m])",
+                "legendFormat": "{{ "{{" }}symbol{{ "}}" }}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+          },
+          {
+            "id": 4,
+            "title": "Trading Signals Generated",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(trading_signals_generated_total[5m])",
+                "legendFormat": "{{ "{{" }}symbol{{ "}}" }} - {{ "{{" }}type{{ "}}" }}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+          },
+          {
+            "id": 5,
+            "title": "Alerts Sent vs Rate Limited",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(alerts_sent_total[5m])",
+                "legendFormat": "Sent - {{ "{{" }}symbol{{ "}}" }}"
+              },
+              {
+                "expr": "rate(alerts_rate_limited_total[5m])",
+                "legendFormat": "Rate Limited - {{ "{{" }}symbol{{ "}}" }}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+          }
+        ],
+        "time": {"from": "now-1h", "to": "now"},
+        "refresh": "30s"
+      }
+    }

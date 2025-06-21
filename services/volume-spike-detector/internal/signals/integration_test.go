@@ -4,18 +4,34 @@ import (
 	"testing"
 	"time"
 	"volume-spike-detector/internal/kafka"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestVolumeDetector_EndToEndIntegration(t *testing.T) {
 	producer := &mockProducer{}
 	threshold := 1.5
-	detector := NewVolumeDetector(producer, threshold)
+	
+	eventsProcessed := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_events_processed", Help: "test"},
+		[]string{"symbol"},
+	)
+	spikesDetected := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_spikes_detected", Help: "test"},
+		[]string{"symbol"},
+	)
+	processingTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	detector := NewVolumeDetector(producer, threshold, *eventsProcessed, *spikesDetected, *processingTime)
 
 	baseVolume := 1000000000.0
 
 	t.Run("medium spike detection", func(t *testing.T) {
 		producer.signals = nil
-		mediumDetector := NewVolumeDetector(producer, threshold)
+		mediumDetector := NewVolumeDetector(producer, threshold, *eventsProcessed, *spikesDetected, *processingTime)
 
 		for i := 0; i < 5; i++ {
 			event := &kafka.PriceEvent{
@@ -45,7 +61,7 @@ func TestVolumeDetector_EndToEndIntegration(t *testing.T) {
 
 	t.Run("strong spike detection", func(t *testing.T) {
 		producer.signals = nil
-		strongDetector := NewVolumeDetector(producer, threshold)
+		strongDetector := NewVolumeDetector(producer, threshold, *eventsProcessed, *spikesDetected, *processingTime)
 
 		for i := 0; i < 5; i++ {
 			event := &kafka.PriceEvent{

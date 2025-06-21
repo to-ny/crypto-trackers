@@ -5,6 +5,8 @@ import (
 	"ma-signal-detector/internal/kafka"
 	"testing"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type mockProducer struct {
@@ -29,7 +31,21 @@ func (m *mockProducer) Close() error {
 
 func TestMADetector_ProcessPriceEvent(t *testing.T) {
 	producer := &mockProducer{}
-	detector := NewMADetector(producer)
+	
+	priceEventsProcessed := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_price_events_processed", Help: "test"},
+		[]string{"symbol"},
+	)
+	signalsGenerated := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_signals_generated", Help: "test"},
+		[]string{"symbol", "signal_type"},
+	)
+	processingTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	detector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 	t.Run("first price event creates history", func(t *testing.T) {
 		event := &kafka.PriceEvent{
@@ -118,7 +134,21 @@ func TestCalculateSMA(t *testing.T) {
 
 func TestMADetector_CrossoverDetection(t *testing.T) {
 	producer := &mockProducer{}
-	detector := NewMADetector(producer)
+	
+	priceEventsProcessed := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_price_events_processed", Help: "test"},
+		[]string{"symbol"},
+	)
+	signalsGenerated := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_signals_generated", Help: "test"},
+		[]string{"symbol", "signal_type"},
+	)
+	processingTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	detector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 	prices := make([]float64, SMA50Period+5)
 	for i := 0; i < SMA50Period; i++ {

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: {{ .Values.namespace }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 30s
+      evaluation_interval: 30s
+
+    scrape_configs:
+      - job_name: 'data-ingestion'
+        static_configs:
+          - targets: ['{{ include "crypto-trackers.fullname" . }}-data-ingestion:80']
+        metrics_path: /metrics
+        scrape_interval: 30s
+
+      - job_name: 'ma-signal-detector'
+        static_configs:
+          - targets: ['{{ include "crypto-trackers.fullname" . }}-ma-signal-detector:80']
+        metrics_path: /metrics
+        scrape_interval: 30s
+
+      - job_name: 'volume-spike-detector'
+        static_configs:
+          - targets: ['{{ include "crypto-trackers.fullname" . }}-volume-spike-detector:80']
+        metrics_path: /metrics
+        scrape_interval: 30s
+
+      - job_name: 'alert-service'
+        static_configs:
+          - targets: ['{{ include "crypto-trackers.fullname" . }}-alert-service:80']
+        metrics_path: /metrics
+        scrape_interval: 30s

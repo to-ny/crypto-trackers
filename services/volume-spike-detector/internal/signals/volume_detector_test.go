@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 	"volume-spike-detector/internal/kafka"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type mockProducer struct {
@@ -30,7 +32,21 @@ func (m *mockProducer) Close() error {
 func TestVolumeDetector_ProcessPriceEvent(t *testing.T) {
 	producer := &mockProducer{}
 	threshold := 1.5
-	detector := NewVolumeDetector(producer, threshold)
+	
+	eventsProcessed := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_events_processed", Help: "test"},
+		[]string{"symbol"},
+	)
+	spikesDetected := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_spikes_detected", Help: "test"},
+		[]string{"symbol"},
+	)
+	processingTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	detector := NewVolumeDetector(producer, threshold, *eventsProcessed, *spikesDetected, *processingTime)
 
 	t.Run("first volume event creates history", func(t *testing.T) {
 		event := &kafka.PriceEvent{
@@ -156,7 +172,21 @@ func TestCalculateAverage(t *testing.T) {
 
 func TestVolumeDetector_HistoryManagement(t *testing.T) {
 	producer := &mockProducer{}
-	detector := NewVolumeDetector(producer, 1.3)
+	
+	eventsProcessed := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_events_processed", Help: "test"},
+		[]string{"symbol"},
+	)
+	spikesDetected := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "test_spikes_detected", Help: "test"},
+		[]string{"symbol"},
+	)
+	processingTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
+		[]string{"symbol"},
+	)
+	
+	detector := NewVolumeDetector(producer, 1.3, *eventsProcessed, *spikesDetected, *processingTime)
 
 	now := time.Now()
 	cutoff := now.Add(-time.Duration(VolumeDays+1) * 24 * time.Hour)

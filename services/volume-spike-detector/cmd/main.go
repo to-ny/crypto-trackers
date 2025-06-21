@@ -16,6 +16,8 @@ import (
 	"volume-spike-detector/internal/signals"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HealthResponse struct {
@@ -24,6 +26,36 @@ type HealthResponse struct {
 
 type ReadyResponse struct {
 	Status string `json:"status"`
+}
+
+var (
+	volumeEventsProcessed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "volume_events_processed_total",
+			Help: "Total number of volume events processed",
+		},
+		[]string{"symbol"},
+	)
+	volumeSpikesDetected = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "volume_spikes_detected_total",
+			Help: "Total number of volume spikes detected",
+		},
+		[]string{"symbol"},
+	)
+	volumeProcessingTime = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "volume_processing_seconds",
+			Help: "Time spent processing volume events",
+		},
+		[]string{"symbol"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(volumeEventsProcessed)
+	prometheus.MustRegister(volumeSpikesDetected)
+	prometheus.MustRegister(volumeProcessingTime)
 }
 
 type Server struct {
@@ -69,7 +101,7 @@ func (s *Server) initializeKafka() error {
 	}
 	s.producer = producer
 
-	detector := signals.NewVolumeDetector(producer, s.config.SpikeThreshold)
+	detector := signals.NewVolumeDetector(producer, s.config.SpikeThreshold, *volumeEventsProcessed, *volumeSpikesDetected, *volumeProcessingTime)
 	s.detector = detector
 
 	consumer, err := kafka.NewConsumer(
@@ -93,6 +125,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/health", server.healthHandler).Methods("GET")
 	router.HandleFunc("/ready", server.readyHandler).Methods("GET")
+	router.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.Port,
