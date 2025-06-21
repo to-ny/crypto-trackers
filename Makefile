@@ -34,7 +34,13 @@ verify:
 	./scripts/verify.sh
 
 monitor:
-	kubectl port-forward -n crypto-trackers svc/prometheus-service 9090:9090
+	@echo "Starting port-forward for Prometheus (9090) and Grafana (3000)..."
+	@echo "Prometheus: http://localhost:9090"
+	@echo "Grafana: http://localhost:3000 (admin/admin)"
+	@echo "Press Ctrl+C to stop"
+	kubectl port-forward -n crypto-trackers svc/prometheus-service 9090:9090 & \
+	kubectl port-forward -n crypto-trackers svc/grafana 3000:3000 & \
+	wait
 
 cleanup:
 	./scripts/cleanup.sh

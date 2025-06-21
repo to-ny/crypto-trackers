@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: {{ .Values.namespace }}
+data:
+  crypto-trackers-overview.json: |
+    {
+        "id": null,
+        "title": "Crypto Trackers Overview",
+        "tags": ["crypto-trackers"],
+        "style": "dark",
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Service Health Status",
+            "type": "stat",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "up",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "green", "value": 1}
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "id": 2,
+            "title": "Price Events Processed",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "rate(price_events_processed_total[5m])",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Trading Signals Generated",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "rate(trading_signals_generated_total[5m])",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Volume Spikes Detected",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "rate(volume_spikes_detected_total[5m])",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Alerts Sent vs Rate Limited",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "rate(alerts_sent_total[5m])",
+                "refId": "A",
+                "legendFormat": "Sent"
+              },
+              {
+                "expr": "rate(alerts_rate_limited_total[5m])",
+                "refId": "B",
+                "legendFormat": "Rate Limited"
+              }
+            ]
+          },
+          {
+            "id": 6,
+            "title": "Processing Time Distribution",
+            "type": "heatmap",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+            "targets": [
+              {
+                "expr": "rate(price_event_processing_seconds_bucket[5m])",
+                "refId": "A"
+              }
+            ]
+          }
+        ],
+        "time": {"from": "now-1h", "to": "now"},
+        "refresh": "30s"
+      }
+
+  crypto-trackers-detailed.json: |
+    {
+        "id": null,
+        "title": "Crypto Trackers Detailed Metrics",
+        "tags": ["crypto-trackers"],
+        "style": "dark",
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Memory Usage by Service",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{namespace=\"crypto-trackers\"}",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "CPU Usage by Service",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{namespace=\"crypto-trackers\"}[5m])",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Signal Types Distribution",
+            "type": "piechart",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "sum by (type) (trading_signals_generated_total)",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Processing Time by Symbol",
+            "type": "table",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, price_event_processing_seconds_bucket)",
+                "refId": "A"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Error Rate",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{code=~\"5..\"}[5m]) / rate(http_requests_total[5m])",
+                "refId": "A"
+              }
+            ]
+          }
+        ],
+        "time": {"from": "now-6h", "to": "now"},
+        "refresh": "1m"
+      }

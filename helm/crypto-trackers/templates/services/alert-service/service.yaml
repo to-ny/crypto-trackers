@@ -8,7 +8,7 @@ metadata:
 spec:
   type: {{ .Values.alertService.service.type }}
   ports:
-    - port: {{ .Values.alertService.service.port }}
+    - port: 8080
       targetPort: http
       protocol: TCP
       name: http

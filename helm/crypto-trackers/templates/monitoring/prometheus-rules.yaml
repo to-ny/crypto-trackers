@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: {{ .Values.namespace }}
+data:
+  crypto-trackers.yml: |
+    groups:
+    - name: crypto-trackers.rules
+      rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{`{{ $labels.job }}`}} is down"
+          description: "Service {{`{{ $labels.job }}`}} has been down for more than 2 minutes."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{code=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{`{{ $labels.job }}`}}"
+          description: "Error rate is {{`{{ $value }}`}} requests per second on {{`{{ $labels.job }}`}}."
+
+      - alert: NoSignalsGenerated
+        expr: increase(trading_signals_generated_total[10m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No trading signals generated"
+          description: "No trading signals have been generated in the last 15 minutes."
+
+      - alert: KafkaLagHigh
+        expr: kafka_consumer_lag_sum > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Kafka consumer lag"
+          description: "Kafka consumer lag is {{`{{ $value }}`}} messages for {{`{{ $labels.job }}`}}."
+
+      - alert: VolumeSpikesLow
+        expr: increase(volume_spikes_detected_total[1h]) < 1
+        for: 2h
+        labels:
+          severity: info
+        annotations:
+          summary: "Low volume spike detection"
+          description: "Less than 1 volume spike detected in the last 2 hours."
+
+      - alert: AlertServiceRateLimiting
+        expr: rate(alerts_rate_limited_total[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High alert rate limiting"
+          description: "Alert service is rate limiting {{`{{ $value }}`}} alerts per second."
+
+      - alert: PriceEventProcessingLow
+        expr: rate(price_events_processed_total[5m]) < 0.01
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low price event processing rate"
+          description: "Price events are being processed at {{`{{ $value }}`}} per second, which is unusually low."
+
+      - alert: MemoryUsageHigh
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{`{{ $labels.pod }}`}}"
+          description: "Memory usage is {{`{{ $value | humanizePercentage }}`}} on {{`{{ $labels.pod }}`}}."
+
+      - alert: CPUUsageHigh
+        expr: rate(container_cpu_usage_seconds_total[5m]) / container_spec_cpu_quota * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{`{{ $labels.pod }}`}}"
+          description: "CPU usage is {{`{{ $value }}`}}% on {{`{{ $labels.pod }}`}}."

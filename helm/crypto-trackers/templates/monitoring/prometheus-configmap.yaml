@@ -18,18 +18,27 @@ data:
 
       - job_name: 'ma-signal-detector'
         static_configs:
-          - targets: ['{{ include "crypto-trackers.fullname" . }}-ma-signal-detector:80']
+          - targets: ['{{ include "crypto-trackers.fullname" . }}-ma-signal-detector:8080']
         metrics_path: /metrics
         scrape_interval: 30s
 
       - job_name: 'volume-spike-detector'
         static_configs:
-          - targets: ['{{ include "crypto-trackers.fullname" . }}-volume-spike-detector:80']
+          - targets: ['{{ include "crypto-trackers.fullname" . }}-volume-spike-detector:8080']
         metrics_path: /metrics
         scrape_interval: 30s
 
       - job_name: 'alert-service'
         static_configs:
-          - targets: ['{{ include "crypto-trackers.fullname" . }}-alert-service:80']
+          - targets: ['{{ include "crypto-trackers.fullname" . }}-alert-service:8080']
         metrics_path: /metrics
         scrape_interval: 30s
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
