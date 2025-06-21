@@ -37,7 +37,7 @@ def ready():
 
 @app.route("/metrics")
 def metrics():
-    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+    return generate_latest()
 
 
 def main_loop():

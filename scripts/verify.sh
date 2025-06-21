@@ -37,6 +37,7 @@ DATA_READY=$(check_deployment_ready crypto-trackers-data-ingestion)
 MA_READY=$(check_deployment_ready crypto-trackers-ma-signal-detector)
 VOLUME_READY=$(check_deployment_ready crypto-trackers-volume-spike-detector)
 ALERT_READY=$(check_deployment_ready crypto-trackers-alert-service)
+PROMETHEUS_READY=$(check_deployment_ready prometheus)
 
 CONN_OUTPUT=$(run_temp_pod verify-connectivity busybox:1.35 "nc -zv zookeeper-service 2181 && nc -zv kafka-service 9092")
 TOPICS_OUTPUT=$(run_temp_pod kafka-verify confluentinc/cp-kafka:7.4.0 "kafka-topics --bootstrap-server kafka-service:9092 --list")
@@ -46,13 +47,17 @@ MA_HEALTH=$(check_health crypto-trackers-ma-signal-detector)
 VOLUME_HEALTH=$(check_health crypto-trackers-volume-spike-detector)
 ALERT_HEALTH=$(check_health crypto-trackers-alert-service)
 
+PROMETHEUS_HEALTH=$(run_temp_pod verify-prometheus busybox:1.35 "wget -qO- prometheus-service:9090/-/healthy || echo 'FAILED'")
+
 echo "Infrastructure: Kafka=$KAFKA_READY ZooKeeper=$ZK_READY"
 echo "Services: Data=$([[ $DATA_READY == "1" ]] && echo "READY" || echo "NOT READY") MA=$([[ $MA_READY == "1" ]] && echo "READY" || echo "NOT READY") Volume=$([[ $VOLUME_READY == "1" ]] && echo "READY" || echo "NOT READY") Alert=$([[ $ALERT_READY == "1" ]] && echo "READY" || echo "NOT READY")"
+echo "Monitoring: Prometheus=$([[ $PROMETHEUS_READY == "1" ]] && echo "READY" || echo "NOT READY")"
 echo "Connectivity: $([[ $CONN_OUTPUT =~ "open" ]] && echo "OK" || echo "FAILED")"
 echo "Topics: $([[ $TOPICS_OUTPUT =~ "crypto-prices" && $TOPICS_OUTPUT =~ "trading-signals" ]] && echo "OK" || echo "MISSING")"
 echo "Health: Data=$DATA_HEALTH MA=$MA_HEALTH Volume=$VOLUME_HEALTH Alert=$ALERT_HEALTH"
+echo "Monitoring Health: Prometheus=$([[ $PROMETHEUS_HEALTH =~ "ok" ]] && echo "OK" || echo "FAILED")"
 
-if [[ $KAFKA_READY == "True" && $ZK_READY == "True" && $CONN_OUTPUT =~ "open" && $TOPICS_OUTPUT =~ "crypto-prices" && $DATA_READY == "1" && $MA_READY == "1" && $VOLUME_READY == "1" && $ALERT_READY == "1" && $DATA_HEALTH == "healthy" && $MA_HEALTH == "healthy" && $VOLUME_HEALTH == "healthy" && $ALERT_HEALTH == "healthy" ]]; then
+if [[ $KAFKA_READY == "True" && $ZK_READY == "True" && $CONN_OUTPUT =~ "open" && $TOPICS_OUTPUT =~ "crypto-prices" && $DATA_READY == "1" && $MA_READY == "1" && $VOLUME_READY == "1" && $ALERT_READY == "1" && $PROMETHEUS_READY == "1" && $DATA_HEALTH == "healthy" && $MA_HEALTH == "healthy" && $VOLUME_HEALTH == "healthy" && $ALERT_HEALTH == "healthy" ]]; then
     echo "System verification SUCCESSFUL"
 else
     echo "System verification FAILED"

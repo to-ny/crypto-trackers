@@ -9,6 +9,10 @@ Kubernetes-based cryptocurrency trading signal detection system.
 - **Volume Spike Detector** (Go): Detects volume spikes
 - **Alert Service** (Go): Rate-limited alerts
 
+## Monitoring
+
+- **Prometheus**: Metrics collection at http://localhost:9090
+
 ## Development
 
 ```bash
@@ -22,5 +26,6 @@ make lint     # Format code
 ```bash
 make deploy   # Deploy system
 make verify   # Check status
+make monitor  # Access monitoring dashboard
 make cleanup  # Remove deployment
 ```

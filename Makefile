@@ -1,4 +1,4 @@
-.PHONY: help build test lint deploy verify cleanup
+.PHONY: help build test lint deploy verify monitor cleanup
 
 help:
 	@echo "build    - Build all images"
@@ -6,6 +6,7 @@ help:
 	@echo "lint     - Format and lint code"
 	@echo "deploy   - Deploy system"
 	@echo "verify   - Check deployment"
+	@echo "monitor  - Access monitoring dashboard"
 	@echo "cleanup  - Remove deployment"
 
 build:
@@ -31,6 +32,9 @@ deploy:
 
 verify:
 	./scripts/verify.sh
+
+monitor:
+	kubectl port-forward -n crypto-trackers svc/prometheus-service 9090:9090
 
 cleanup:
 	./scripts/cleanup.sh
