@@ -243,12 +243,82 @@ This roadmap is designed for AI coding agents. Each task is self-contained and i
 - All services are monitored and visible
 - Dashboard provides actionable insights for operations
 
-## Success Criteria
+## Phase 7: System Validation
 
-Upon completion of all tasks:
-- [ ] Complete system detects moving average crossovers for BTC and ETH
-- [ ] Volume spike detection works for both cryptocurrencies  
-- [ ] Alerts are generated and properly rate-limited
-- [ ] All services deploy via Helm charts
-- [ ] System runs continuously without manual intervention
-- [ ] Adding new cryptocurrencies requires only configuration changes
+### Task 7.1: Test Data Generation
+**Objective:** Create controlled test data for validation scenarios.
+
+**Requirements:**
+- Create test data generator that produces price events with known patterns
+- Generate golden cross scenario: prices that create SMA 20 crossing above SMA 50
+- Generate death cross scenario: prices that create SMA 20 crossing below SMA 50  
+- Generate volume spike scenario: volume data exceeding 1.3x average threshold
+- Include edge cases: insufficient data, API failures, malformed messages
+
+**Acceptance Criteria:**
+- Test data generator creates predictable signal scenarios
+- Generated data follows exact Price Event schema
+- All test scenarios are mathematically verified to trigger expected signals
+
+### Task 7.2: Integration Test Framework
+**Objective:** Build automated testing framework for end-to-end validation.
+
+**Requirements:**
+- Create test suite that deploys system in isolated test environment
+- Implement test data injection into Kafka topics
+- Create signal verification logic that checks expected outputs
+- Add test cases for each service: data ingestion, signal detection, alerts
+- Include negative test cases: service failures, network issues, invalid data
+
+**Test Categories:**
+- Happy path: Normal data flow produces expected signals
+- Signal accuracy: Golden cross, death cross, volume spike detection
+- Rate limiting: Alert cooldown periods work correctly
+- Error handling: Services recover from failures gracefully
+
+**Acceptance Criteria:**
+- Test framework runs completely automated
+- All test scenarios pass consistently
+- Test failures provide clear diagnostic information
+
+### Task 7.3: Health Check Automation
+**Objective:** Automate system health verification.
+
+**Requirements:**
+- Create health check script that validates all service endpoints
+- Verify Kafka topic accessibility and partition assignment
+- Test Prometheus metrics collection and Grafana connectivity
+- Implement service dependency checking (Kafka before consumers)
+- Add network connectivity and DNS resolution tests
+
+**Health Checks:**
+- Service endpoints: `/health` and `/ready` return 200
+- Kafka connectivity: Topics exist and are accessible
+- Message flow: Test messages traverse entire pipeline
+- Monitoring stack: Prometheus scrapes metrics, Grafana displays data
+
+**Acceptance Criteria:**
+- Health check script passes on fully deployed system
+- All connectivity and dependency checks work
+- Script provides clear pass/fail results with error details
+
+### Task 7.4: Failure Simulation Testing
+**Objective:** Test system resilience and recovery capabilities.
+
+**Requirements:**
+- Create failure simulation scenarios: service crashes, network partitions, resource exhaustion
+- Test Kafka broker failures and partition reassignment
+- Simulate API rate limiting and timeout scenarios
+- Verify graceful degradation and service recovery
+- Test data consistency after failure recovery
+
+**Failure Scenarios:**
+- Service pod restarts: Consumers resume from correct offsets
+- Kafka partition failures: Messages continue processing
+- API failures: System continues without data loss
+- Resource limits: Services handle memory/CPU constraints
+
+**Acceptance Criteria:**
+- System recovers automatically from all simulated failures
+- No data loss or corruption during failure scenarios
+- Services resume normal operation after recovery
