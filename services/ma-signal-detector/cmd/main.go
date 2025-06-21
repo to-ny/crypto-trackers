@@ -59,11 +59,11 @@ func init() {
 }
 
 type Server struct {
-	config    *config.Config
-	ready     bool
-	consumer  *kafka.Consumer
-	producer  kafka.SignalProducer
-	detector  *signals.MADetector
+	config   *config.Config
+	ready    bool
+	consumer *kafka.Consumer
+	producer kafka.SignalProducer
+	detector *signals.MADetector
 }
 
 func NewServer(cfg *config.Config) *Server {

@@ -11,9 +11,9 @@ import (
 )
 
 type AlertProcessor struct {
-	rateLimiter      *RateLimiter
-	alertsReceived   prometheus.CounterVec
-	alertsSent       prometheus.CounterVec
+	rateLimiter       *RateLimiter
+	alertsReceived    prometheus.CounterVec
+	alertsSent        prometheus.CounterVec
 	alertsRateLimited prometheus.CounterVec
 }
 

@@ -5,6 +5,10 @@ Fetches BTC/ETH price data from CoinGecko API and publishes events to Kafka.
 ## Development
 
 ```bash
+# Setup virtual environment
+python -m venv venv
+source venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 pip install -r requirements-dev.txt

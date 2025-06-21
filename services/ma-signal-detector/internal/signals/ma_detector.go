@@ -47,9 +47,9 @@ func NewMADetector(producer kafka.SignalProducer, priceEventsProcessed prometheu
 func (ma *MADetector) ProcessPriceEvent(event *kafka.PriceEvent) error {
 	timer := prometheus.NewTimer(ma.processingTime.WithLabelValues(event.Symbol))
 	defer timer.ObserveDuration()
-	
+
 	ma.priceEventsProcessed.WithLabelValues(event.Symbol).Inc()
-	
+
 	ma.mutex.Lock()
 	defer ma.mutex.Unlock()
 

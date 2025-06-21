@@ -10,7 +10,7 @@ import (
 
 func TestMADetector_EndToEndIntegration(t *testing.T) {
 	producer := &mockProducer{}
-	
+
 	priceEventsProcessed := prometheus.NewCounterVec(
 		prometheus.CounterOpts{Name: "test_price_events_processed", Help: "test"},
 		[]string{"symbol"},
@@ -23,7 +23,7 @@ func TestMADetector_EndToEndIntegration(t *testing.T) {
 		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	detector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 	t.Run("golden cross signal generation", func(t *testing.T) {
@@ -31,7 +31,7 @@ func TestMADetector_EndToEndIntegration(t *testing.T) {
 		goldDetector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 		basePrice := 50000.0
-		
+
 		for i := 0; i < SMA50Period; i++ {
 			price := basePrice
 			event := &kafka.PriceEvent{

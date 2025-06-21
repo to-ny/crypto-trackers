@@ -24,13 +24,13 @@ type VolumeHistory struct {
 }
 
 type VolumeDetector struct {
-	volumeHistory        map[string]*VolumeHistory
-	threshold            float64
-	mutex                sync.RWMutex
-	producer             kafka.SignalProducer
-	eventsProcessed      prometheus.CounterVec
-	spikesDetected       prometheus.CounterVec
-	processingTime       prometheus.HistogramVec
+	volumeHistory   map[string]*VolumeHistory
+	threshold       float64
+	mutex           sync.RWMutex
+	producer        kafka.SignalProducer
+	eventsProcessed prometheus.CounterVec
+	spikesDetected  prometheus.CounterVec
+	processingTime  prometheus.HistogramVec
 }
 
 func NewVolumeDetector(producer kafka.SignalProducer, threshold float64, eventsProcessed, spikesDetected prometheus.CounterVec, processingTime prometheus.HistogramVec) *VolumeDetector {

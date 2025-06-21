@@ -21,7 +21,7 @@ func TestAlertProcessor_ProcessSignal(t *testing.T) {
 		prometheus.CounterOpts{Name: "test_alerts_rate_limited", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	processor := NewAlertProcessor(5, *alertsReceived, *alertsSent, *alertsRateLimited)
 
 	signal := &kafka.TradingSignal{
@@ -79,7 +79,7 @@ func TestAlertProcessor_FormatAlert(t *testing.T) {
 		prometheus.CounterOpts{Name: "test_alerts_rate_limited", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	processor := NewAlertProcessor(5, *alertsReceived, *alertsSent, *alertsRateLimited)
 
 	signal := &kafka.TradingSignal{

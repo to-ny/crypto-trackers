@@ -11,21 +11,37 @@ help:
 
 build:
 	docker build -t crypto-trackers/data-ingestion:latest ./services/data-ingestion/
-	cd ./services/ma-signal-detector && docker build -t crypto-trackers/ma-signal-detector:latest .
-	cd ./services/volume-spike-detector && docker build -t crypto-trackers/volume-spike-detector:latest .
-	cd ./services/alert-service && docker build -t crypto-trackers/alert-service:latest .
+	docker build -t crypto-trackers/ma-signal-detector:latest ./services/ma-signal-detector/
+	docker build -t crypto-trackers/volume-spike-detector:latest ./services/volume-spike-detector/
+	docker build -t crypto-trackers/alert-service:latest ./services/alert-service/
 
 test:
-	cd ./services/data-ingestion && ./venv/bin/python -m pytest
-	cd ./services/ma-signal-detector && go test ./... -v
-	cd ./services/volume-spike-detector && go test ./... -v
-	cd ./services/alert-service && go test ./... -v
+	@echo "Testing data-ingestion..."
+	@cd ./services/data-ingestion && (test -d venv || (python -m venv venv && ./venv/bin/pip install -r requirements.txt -r requirements-dev.txt)) && ./venv/bin/python -m pytest; echo $$? > /tmp/test_data_ingestion_exit
+	@echo "Testing ma-signal-detector..."
+	@cd ./services/ma-signal-detector && go test ./... -v; echo $$? > /tmp/test_ma_signal_exit
+	@echo "Testing volume-spike-detector..."
+	@cd ./services/volume-spike-detector && go test ./... -v; echo $$? > /tmp/test_volume_spike_exit
+	@echo "Testing alert-service..."
+	@cd ./services/alert-service && go test ./... -v; echo $$? > /tmp/test_alert_service_exit
+	@data_exit=$$(cat /tmp/test_data_ingestion_exit); ma_exit=$$(cat /tmp/test_ma_signal_exit); volume_exit=$$(cat /tmp/test_volume_spike_exit); alert_exit=$$(cat /tmp/test_alert_service_exit); \
+	total_exit=$$(($$data_exit + $$ma_exit + $$volume_exit + $$alert_exit)); \
+	rm -f /tmp/test_*_exit; \
+	if [ $$total_exit -eq 0 ]; then echo "All tests completed successfully"; else echo "Tests failed in one or more services"; exit 1; fi
 
 lint:
-	cd ./services/data-ingestion && ./venv/bin/python -m black . && ./venv/bin/python -m ruff check . && ./venv/bin/python -m mypy .
-	cd ./services/ma-signal-detector && go fmt ./... && go vet ./...
-	cd ./services/volume-spike-detector && go fmt ./... && go vet ./...
-	cd ./services/alert-service && go fmt ./... && go vet ./...
+	@echo "Linting data-ingestion..."
+	@cd ./services/data-ingestion && (test -d venv || (python -m venv venv && ./venv/bin/pip install -r requirements.txt -r requirements-dev.txt)) && ./venv/bin/python -m black . && ./venv/bin/python -m ruff check . --fix && ./venv/bin/python -m mypy .; echo $$? > /tmp/lint_data_ingestion_exit
+	@echo "Linting ma-signal-detector..."
+	@cd ./services/ma-signal-detector && go fmt ./... && go vet ./...; echo $$? > /tmp/lint_ma_signal_exit
+	@echo "Linting volume-spike-detector..."
+	@cd ./services/volume-spike-detector && go fmt ./... && go vet ./...; echo $$? > /tmp/lint_volume_spike_exit
+	@echo "Linting alert-service..."
+	@cd ./services/alert-service && go fmt ./... && go vet ./...; echo $$? > /tmp/lint_alert_service_exit
+	@data_exit=$$(cat /tmp/lint_data_ingestion_exit); ma_exit=$$(cat /tmp/lint_ma_signal_exit); volume_exit=$$(cat /tmp/lint_volume_spike_exit); alert_exit=$$(cat /tmp/lint_alert_service_exit); \
+	total_exit=$$(($$data_exit + $$ma_exit + $$volume_exit + $$alert_exit)); \
+	rm -f /tmp/lint_*_exit; \
+	if [ $$total_exit -eq 0 ]; then echo "All linting completed successfully"; else echo "Linting failed in one or more services"; exit 1; fi
 
 deploy:
 	helm upgrade --install crypto-trackers ./helm/crypto-trackers --create-namespace --namespace crypto-trackers

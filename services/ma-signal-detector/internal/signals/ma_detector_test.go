@@ -31,7 +31,7 @@ func (m *mockProducer) Close() error {
 
 func TestMADetector_ProcessPriceEvent(t *testing.T) {
 	producer := &mockProducer{}
-	
+
 	priceEventsProcessed := prometheus.NewCounterVec(
 		prometheus.CounterOpts{Name: "test_price_events_processed", Help: "test"},
 		[]string{"symbol"},
@@ -44,7 +44,7 @@ func TestMADetector_ProcessPriceEvent(t *testing.T) {
 		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	detector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 	t.Run("first price event creates history", func(t *testing.T) {
@@ -134,7 +134,7 @@ func TestCalculateSMA(t *testing.T) {
 
 func TestMADetector_CrossoverDetection(t *testing.T) {
 	producer := &mockProducer{}
-	
+
 	priceEventsProcessed := prometheus.NewCounterVec(
 		prometheus.CounterOpts{Name: "test_price_events_processed", Help: "test"},
 		[]string{"symbol"},
@@ -147,7 +147,7 @@ func TestMADetector_CrossoverDetection(t *testing.T) {
 		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	detector := NewMADetector(producer, *priceEventsProcessed, *signalsGenerated, *processingTime)
 
 	prices := make([]float64, SMA50Period+5)

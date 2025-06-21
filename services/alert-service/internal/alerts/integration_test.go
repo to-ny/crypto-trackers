@@ -21,7 +21,7 @@ func TestAlertProcessor_EndToEndIntegration(t *testing.T) {
 		prometheus.CounterOpts{Name: "test_alerts_rate_limited", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	processor := NewAlertProcessor(5, *alertsReceived, *alertsSent, *alertsRateLimited)
 
 	t.Run("rate limiting integration", func(t *testing.T) {
@@ -48,7 +48,7 @@ func TestAlertProcessor_EndToEndIntegration(t *testing.T) {
 
 	t.Run("multiple symbols processing", func(t *testing.T) {
 		symbols := []string{"BTC", "ETH", "ADA", "SOL"}
-		
+
 		for _, symbol := range symbols {
 			signal := &kafka.TradingSignal{
 				Timestamp:      time.Now(),

@@ -32,7 +32,7 @@ func (m *mockProducer) Close() error {
 func TestVolumeDetector_ProcessPriceEvent(t *testing.T) {
 	producer := &mockProducer{}
 	threshold := 1.5
-	
+
 	eventsProcessed := prometheus.NewCounterVec(
 		prometheus.CounterOpts{Name: "test_events_processed", Help: "test"},
 		[]string{"symbol"},
@@ -45,7 +45,7 @@ func TestVolumeDetector_ProcessPriceEvent(t *testing.T) {
 		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	detector := NewVolumeDetector(producer, threshold, *eventsProcessed, *spikesDetected, *processingTime)
 
 	t.Run("first volume event creates history", func(t *testing.T) {
@@ -172,7 +172,7 @@ func TestCalculateAverage(t *testing.T) {
 
 func TestVolumeDetector_HistoryManagement(t *testing.T) {
 	producer := &mockProducer{}
-	
+
 	eventsProcessed := prometheus.NewCounterVec(
 		prometheus.CounterOpts{Name: "test_events_processed", Help: "test"},
 		[]string{"symbol"},
@@ -185,7 +185,7 @@ func TestVolumeDetector_HistoryManagement(t *testing.T) {
 		prometheus.HistogramOpts{Name: "test_processing_time", Help: "test"},
 		[]string{"symbol"},
 	)
-	
+
 	detector := NewVolumeDetector(producer, 1.3, *eventsProcessed, *spikesDetected, *processingTime)
 
 	now := time.Now()
