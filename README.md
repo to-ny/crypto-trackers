@@ -4,14 +4,10 @@ Kubernetes-based cryptocurrency trading signal detection system.
 
 ## Services
 
-- **Data Ingestion** (Python): Fetches BTC/ETH prices from CoinGecko
-- **MA Signal Detector** (Go): Detects SMA 20/50 crossovers  
-- **Volume Spike Detector** (Go): Detects volume spikes
-- **Alert Service** (Go): Rate-limited alerts
-
-## Monitoring
-
-- **Prometheus**: Metrics collection at http://localhost:9090
+- [**Data Ingestion**](services/data-ingestion/README.md) (Python): Fetches BTC/ETH prices from CoinGecko
+- [**MA Signal Detector**](services/ma-signal-detector/README.md) (Go): Detects SMA 20/50 crossovers  
+- [**Volume Spike Detector**](services/volume-spike-detector/README.md) (Go): Detects volume spikes
+- [**Alert Service**](services/alert-service/README.md) (Go): Rate-limited alerts
 
 ## Development
 
