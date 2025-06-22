@@ -243,82 +243,35 @@ This roadmap is designed for AI coding agents. Each task is self-contained and i
 - All services are monitored and visible
 - Dashboard provides actionable insights for operations
 
-## Phase 7: System Validation
+## Phase 7: Integration Testing
 
-### Task 7.1: Test Data Generation
-**Objective:** Create controlled test data for validation scenarios.
-
-**Requirements:**
-- Create test data generator that produces price events with known patterns
-- Generate golden cross scenario: prices that create SMA 20 crossing above SMA 50
-- Generate death cross scenario: prices that create SMA 20 crossing below SMA 50  
-- Generate volume spike scenario: volume data exceeding 1.3x average threshold
-- Include edge cases: insufficient data, API failures, malformed messages
-
-**Acceptance Criteria:**
-- Test data generator creates predictable signal scenarios
-- Generated data follows exact Price Event schema
-- All test scenarios are mathematically verified to trigger expected signals
-
-### Task 7.2: Integration Test Framework
-**Objective:** Build automated testing framework for end-to-end validation.
+### Task 7.1: Test Runner Pod
+**Objective:** Create in-cluster automated integration tests.
 
 **Requirements:**
-- Create test suite that deploys system in isolated test environment
-- Implement test data injection into Kafka topics
-- Create signal verification logic that checks expected outputs
-- Add test cases for each service: data ingestion, signal detection, alerts
-- Include negative test cases: service failures, network issues, invalid data
-
-**Test Categories:**
-- Happy path: Normal data flow produces expected signals
-- Signal accuracy: Golden cross, death cross, volume spike detection
-- Rate limiting: Alert cooldown periods work correctly
-- Error handling: Services recover from failures gracefully
+- Build test runner Docker image with Python test scripts
+- Generate 3 scenarios: golden cross, death cross, volume spike (60 events each)
+- Connect to kafka-service:9092 directly (no port-forward)
 
 **Acceptance Criteria:**
-- Test framework runs completely automated
-- All test scenarios pass consistently
-- Test failures provide clear diagnostic information
+- Test runner deploys and connects to Kafka
+- Generated patterns trigger expected signals mathematically
+- Events follow Price Event schema
 
-### Task 7.3: Health Check Automation
-**Objective:** Automate system health verification.
+### Task 7.2: Automated End-to-End Verification
+**Objective:** Test full pipeline with isolation.
 
 **Requirements:**
-- Create health check script that validates all service endpoints
-- Verify Kafka topic accessibility and partition assignment
-- Test Prometheus metrics collection and Grafana connectivity
-- Implement service dependency checking (Kafka before consumers)
-- Add network connectivity and DNS resolution tests
+- setUp: Scale data-ingestion to 0, restart detectors, reset consumer offsets
+- Test: Inject data, monitor trading-signals topic, verify outputs within 60s
+- cleanUp: Restore data-ingestion to 1, cleanup test artifacts
 
-**Health Checks:**
-- Service endpoints: `/health` and `/ready` return 200
-- Kafka connectivity: Topics exist and are accessible
-- Message flow: Test messages traverse entire pipeline
-- Monitoring stack: Prometheus scrapes metrics, Grafana displays data
+**Expected Results:**
+- Golden cross: 1 bullish signal
+- Death cross: 1 bearish signal
+- Volume spike: 1 spike signal
 
 **Acceptance Criteria:**
-- Health check script passes on fully deployed system
-- All connectivity and dependency checks work
-- Script provides clear pass/fail results with error details
-
-### Task 7.4: Failure Simulation Testing
-**Objective:** Test system resilience and recovery capabilities.
-
-**Requirements:**
-- Create failure simulation scenarios: service crashes, network partitions, resource exhaustion
-- Test Kafka broker failures and partition reassignment
-- Simulate API rate limiting and timeout scenarios
-- Verify graceful degradation and service recovery
-- Test data consistency after failure recovery
-
-**Failure Scenarios:**
-- Service pod restarts: Consumers resume from correct offsets
-- Kafka partition failures: Messages continue processing
-- API failures: System continues without data loss
-- Resource limits: Services handle memory/CPU constraints
-
-**Acceptance Criteria:**
-- System recovers automatically from all simulated failures
-- No data loss or corruption during failure scenarios
-- Services resume normal operation after recovery
+- All 3 scenarios produce expected signals
+- Test isolation prevents data pollution
+- cleanUp restores normal operations
