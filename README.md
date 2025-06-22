@@ -17,7 +17,7 @@ Kubernetes-based cryptocurrency trading signal detection system.
 
 ```bash
 make build    # Build images
-make test     # Run tests
+make test     # Run tests  
 make lint     # Format code
 ```
 
@@ -29,3 +29,11 @@ make verify   # Check status
 make monitor  # Access monitoring dashboard
 make cleanup  # Remove deployment
 ```
+
+## Integration Testing
+
+```bash
+make integration-test
+```
+
+See [integration-tests/README.md](integration-tests/README.md) for details.

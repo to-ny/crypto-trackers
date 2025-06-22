@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: integration-test-runner
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: integration-test-runner
+spec:
+  template:
+    metadata:
+      labels:
+        app: integration-test-runner
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: test-runner
+        image: crypto-trackers/integration-test-runner:latest
+        env:
+        - name: KAFKA_HOST
+          value: "kafka-service:9092"
+        - name: NAMESPACE
+          value: {{ .Values.global.namespace }}
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      serviceAccountName: integration-test-runner
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: integration-test-runner
+  namespace: {{ .Values.global.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ .Values.global.namespace }}
+  name: integration-test-runner
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/scale"]
+  verbs: ["get", "list", "patch", "update"]
+- apiGroups: [""]
+  resources: ["pods", "pods/exec"]
+  verbs: ["get", "list", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: integration-test-runner
+  namespace: {{ .Values.global.namespace }}
+subjects:
+- kind: ServiceAccount
+  name: integration-test-runner
+  namespace: {{ .Values.global.namespace }}
+roleRef:
+  kind: Role
+  name: integration-test-runner
+  apiGroup: rbac.authorization.k8s.io

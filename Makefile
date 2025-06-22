@@ -1,19 +1,23 @@
-.PHONY: help build test lint deploy verify monitor cleanup
+.PHONY: help build test lint deploy verify monitor cleanup integration-test
 
 help:
-	@echo "build    - Build all images"
-	@echo "test     - Run all tests"
-	@echo "lint     - Format and lint code"
-	@echo "deploy   - Deploy system"
-	@echo "verify   - Check deployment"
-	@echo "monitor  - Access monitoring dashboard"
-	@echo "cleanup  - Remove deployment"
+	@echo "build            - Build all images"
+	@echo "test             - Run all tests"
+	@echo "lint             - Format and lint code"
+	@echo "deploy           - Deploy system"
+	@echo "verify           - Check deployment"
+	@echo "monitor          - Access monitoring dashboard"
+	@echo "integration-test - Build & Run integration tests"
+	@echo "cleanup          - Remove deployment"
 
 build:
 	docker build -t crypto-trackers/data-ingestion:latest ./services/data-ingestion/
 	docker build -t crypto-trackers/ma-signal-detector:latest ./services/ma-signal-detector/
 	docker build -t crypto-trackers/volume-spike-detector:latest ./services/volume-spike-detector/
 	docker build -t crypto-trackers/alert-service:latest ./services/alert-service/
+
+build-integration-test:
+	docker build -t crypto-trackers/integration-test-runner:latest ./integration-tests/
 
 test:
 	@echo "Testing data-ingestion..."
@@ -57,6 +61,13 @@ monitor:
 	kubectl port-forward -n crypto-trackers svc/prometheus-service 9090:9090 & \
 	kubectl port-forward -n crypto-trackers svc/grafana 3000:3000 & \
 	wait
+
+integration-test: build-integration-test
+	@echo "Running integration tests..."
+	kubectl delete job integration-test-runner -n crypto-trackers --ignore-not-found=true
+	helm template crypto-trackers ./helm/crypto-trackers --show-only templates/integration-tests/test-runner-job.yaml | kubectl apply -f -
+	kubectl wait --for=condition=complete --timeout=300s job/integration-test-runner -n crypto-trackers
+	kubectl logs job/integration-test-runner -n crypto-trackers
 
 cleanup:
 	./scripts/cleanup.sh
