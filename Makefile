@@ -16,9 +16,6 @@ build:
 	docker build -t crypto-trackers/volume-spike-detector:latest ./services/volume-spike-detector/
 	docker build -t crypto-trackers/alert-service:latest ./services/alert-service/
 
-build-integration-test:
-	docker build -t crypto-trackers/integration-test-runner:latest ./integration-tests/
-
 test:
 	@echo "Testing data-ingestion..."
 	@cd ./services/data-ingestion && (test -d venv || (python -m venv venv && ./venv/bin/pip install -r requirements.txt -r requirements-dev.txt)) && ./venv/bin/python -m pytest; echo $$? > /tmp/test_data_ingestion_exit
@@ -62,12 +59,15 @@ monitor:
 	kubectl port-forward -n crypto-trackers svc/grafana 3000:3000 & \
 	wait
 
+cleanup:
+	./scripts/cleanup.sh
+
+build-integration-test:
+	docker build -t crypto-trackers/integration-test-runner:latest ./integration-tests/
+
 integration-test: build-integration-test
 	@echo "Running integration tests..."
 	kubectl delete job integration-test-runner -n crypto-trackers --ignore-not-found=true
-	helm template crypto-trackers ./helm/crypto-trackers --show-only templates/integration-tests/test-runner-job.yaml | kubectl apply -f -
+	kubectl apply -f ./integration-tests/test-runner-job.yaml
 	kubectl wait --for=condition=complete --timeout=300s job/integration-test-runner -n crypto-trackers
 	kubectl logs job/integration-test-runner -n crypto-trackers
-
-cleanup:
-	./scripts/cleanup.sh

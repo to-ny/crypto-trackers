@@ -1,36 +1,34 @@
 # Integration Tests
 
-Automated end-to-end tests that verify the complete signal detection pipeline.
+End-to-end tests for the signal detection pipeline.
 
 ## Test Scenarios
 
-- **Golden Cross**: Tests SMA 20/50 bullish crossover detection
-- **Death Cross**: Tests SMA 20/50 bearish crossover detection  
-- **Volume Spike**: Tests volume spike detection above 7-day average
+- **Death Cross**: SMA 20/50 bearish crossover detection  
+- **Volume Spike**: Volume spike detection above 7-day average
 
-## Test Process
-
-1. **Setup**: Scale data-ingestion to 0, restart detectors, reset consumer offsets
-2. **Inject**: Generate 60 test events per scenario directly to Kafka
-3. **Verify**: Monitor trading-signals topic for expected outputs within 60s
-4. **Cleanup**: Restore data-ingestion to 1, cleanup test artifacts
-
-## Usage
+## Development
 
 ```bash
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Format code
+python -m black .
+
+# Lint code
+python -m ruff check .
+python -m mypy .
+
 # Build test image
 docker build -t crypto-trackers/integration-test-runner:latest .
 
 # Deploy and run tests
-helm template crypto-trackers ../helm/crypto-trackers --show-only templates/integration-tests/test-runner-job.yaml | kubectl apply -f -
+kubectl apply -f test-runner-job.yaml
 kubectl wait --for=condition=complete --timeout=300s job/integration-test-runner -n crypto-trackers
 kubectl logs job/integration-test-runner -n crypto-trackers
 ```
-
-## Expected Results
-
-- Golden cross: 1 bullish signal
-- Death cross: 1 bearish signal
-- Volume spike: 1 spike signal
-
-Tests run in isolated environment without affecting live data ingestion.
