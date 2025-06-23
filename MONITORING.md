@@ -8,7 +8,7 @@ The crypto-trackers system includes comprehensive monitoring with Prometheus, Al
 
 All Go services expose metrics at `/metrics` on port 8080:
 - `ma-signal-detector:8080/metrics`
-- `volume-spike-detector:8080/metrics` 
+- `volume-spike-detector:8080/metrics`
 - `alert-service:8080/metrics`
 - `data-ingestion:80/metrics` (Python service)
 

@@ -5,3 +5,4 @@ black==23.7.0
 ruff==0.0.287
 mypy==1.5.1
 pre-commit==3.4.0
+types-requests==2.32.4.20250611

@@ -32,7 +32,7 @@ test:
 
 lint:
 	@echo "Linting data-ingestion..."
-	@cd ./services/data-ingestion && (test -d venv || (python -m venv venv && ./venv/bin/pip install -r requirements.txt -r requirements-dev.txt)) && ./venv/bin/python -m black . && ./venv/bin/python -m ruff check . --fix && ./venv/bin/python -m mypy .; echo $$? > /tmp/lint_data_ingestion_exit
+	@cd ./services/data-ingestion && (test -d venv || (python -m venv venv && ./venv/bin/pip install -r requirements.txt -r requirements-dev.txt)) && ./venv/bin/python -m black . && ./venv/bin/python -m ruff check . --fix && ./venv/bin/python -m mypy src/; echo $$? > /tmp/lint_data_ingestion_exit
 	@echo "Linting ma-signal-detector..."
 	@cd ./services/ma-signal-detector && go fmt ./... && go vet ./...; echo $$? > /tmp/lint_ma_signal_exit
 	@echo "Linting volume-spike-detector..."

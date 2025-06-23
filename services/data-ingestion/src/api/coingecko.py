@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 import requests
 
@@ -7,12 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class CoinGeckoClient:
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_url = "https://api.coingecko.com/api/v3"
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": "crypto-trackers/1.0"})
 
-    def fetch_price_data(self) -> list | None:
+    def fetch_price_data(self) -> list[dict[str, Any]] | None:
         try:
             url = f"{self.base_url}/simple/price"
             params = {

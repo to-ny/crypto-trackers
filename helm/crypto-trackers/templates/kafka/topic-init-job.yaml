@@ -32,10 +32,10 @@ spec:
         - |
           # Create crypto-prices topic
           kafka-topics --bootstrap-server kafka-service:9092 --create --if-not-exists --topic {{ .Values.config.kafka.topics.cryptoPrices }} --partitions 3 --replication-factor 1
-          
-          # Create trading-signals topic  
+
+          # Create trading-signals topic
           kafka-topics --bootstrap-server kafka-service:9092 --create --if-not-exists --topic {{ .Values.config.kafka.topics.tradingSignals }} --partitions 3 --replication-factor 1
-          
+
           # List topics to verify creation
           kafka-topics --bootstrap-server kafka-service:9092 --list
         env:

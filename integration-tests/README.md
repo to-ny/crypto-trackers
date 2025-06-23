@@ -4,7 +4,7 @@ End-to-end tests for the signal detection pipeline.
 
 ## Test Scenarios
 
-- **Death Cross**: SMA 20/50 bearish crossover detection  
+- **Death Cross**: SMA 20/50 bearish crossover detection
 - **Volume Spike**: Volume spike detection above 7-day average
 
 ## Development

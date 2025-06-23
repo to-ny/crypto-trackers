@@ -17,7 +17,7 @@ run_temp_pod() {
     local name=$1
     local image=$2
     local cmd=$3
-    
+
     kubectl run $name --image=$image --restart=Never -n crypto-trackers -- sh -c "$cmd" >/dev/null 2>&1
     sleep 5
     local output=$(kubectl logs $name -n crypto-trackers 2>/dev/null || echo "failed")

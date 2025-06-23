@@ -9,13 +9,15 @@ logger = logging.getLogger(__name__)
 
 
 class KafkaEventProducer:
-    def __init__(self, bootstrap_servers="kafka:9092", topic="crypto-prices"):
+    def __init__(
+        self, bootstrap_servers: str = "kafka:9092", topic: str = "crypto-prices"
+    ) -> None:
         self.topic = topic
-        self.producer = None
+        self.producer: KafkaProducer | None = None
         self.bootstrap_servers = bootstrap_servers
         self._connect()
 
-    def _connect(self):
+    def _connect(self) -> None:
         try:
             self.producer = KafkaProducer(
                 bootstrap_servers=self.bootstrap_servers,
@@ -56,15 +58,15 @@ class KafkaEventProducer:
             logger.error(f"Unexpected error publishing events: {e}")
             return False
 
-    def _on_send_success(self, record_metadata):
+    def _on_send_success(self, record_metadata: Any) -> None:
         logger.debug(
             f"Message sent to {record_metadata.topic} partition {record_metadata.partition} offset {record_metadata.offset}"
         )
 
-    def _on_send_error(self, excp):
+    def _on_send_error(self, excp: Exception) -> None:
         logger.error(f"Failed to send message: {excp}")
 
-    def close(self):
+    def close(self) -> None:
         if self.producer:
             self.producer.close()
             logger.info("Kafka producer closed")

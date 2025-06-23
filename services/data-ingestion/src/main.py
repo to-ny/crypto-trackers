@@ -4,7 +4,7 @@ import time
 from threading import Thread
 
 from api.coingecko import CoinGeckoClient
-from flask import Flask, jsonify
+from flask import Flask, Response, jsonify
 from kafka_client.producer import KafkaEventProducer
 from prometheus_client import Counter, Histogram, generate_latest
 
@@ -30,23 +30,23 @@ api_response_time = Histogram(
 
 
 @app.route("/health")
-def health():
+def health() -> Response:
     return jsonify({"status": "healthy"})
 
 
 @app.route("/ready")
-def ready():
+def ready() -> Response:
     global kafka_producer
     ready_status = kafka_producer is not None and kafka_producer.producer is not None
     return jsonify({"status": "ready" if ready_status else "not ready"})
 
 
 @app.route("/metrics")
-def metrics():
-    return generate_latest()
+def metrics() -> Response:
+    return Response(generate_latest(), mimetype="text/plain")
 
 
-def main_loop():
+def main_loop() -> None:
     global kafka_producer
 
     kafka_servers = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")

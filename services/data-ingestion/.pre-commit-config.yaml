@@ -22,4 +22,5 @@ repos:
     rev: v1.5.1
     hooks:
       - id: mypy
+        args: [--explicit-package-bases]
         additional_dependencies: [types-requests]
