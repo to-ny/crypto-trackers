@@ -1,0 +1,14 @@
+__debug_bin*
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+main
+go.work
+vendor/
+.env
+.env.local
+*.log
